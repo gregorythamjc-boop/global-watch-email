@@ -12,6 +12,10 @@ import yfinance as yf
 from dotenv import load_dotenv
 
 
+# =========================
+# ENVIRONMENT SETTINGS
+# =========================
+
 load_dotenv()
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")
@@ -22,6 +26,10 @@ TODAY = datetime.now().strftime("%d %b %Y")
 GENERATED_TIME = datetime.now().strftime("%d %b %Y, %I:%M %p")
 
 
+# =========================
+# NEWS FEEDS
+# =========================
+
 NEWS_FEEDS = {
     "CNBC World": "https://www.cnbc.com/id/100727362/device/rss/rss.html",
     "CNBC Markets": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
@@ -29,13 +37,30 @@ NEWS_FEEDS = {
 }
 
 
+# =========================
+# WATCHLISTS
+# =========================
+
 GLOBAL_MARKETS = {
     "S&P 500": "^GSPC",
     "Nasdaq": "^IXIC",
     "Dow Jones": "^DJI",
+    "STI Singapore": "^STI",
     "Hang Seng": "^HSI",
-    "Nikkei": "^N225",
-    "STI": "^STI",
+    "Nikkei 225": "^N225",
+    "Gold": "GC=F",
+    "Crude Oil": "CL=F",
+    "Bitcoin": "BTC-USD",
+    "USD/SGD": "SGD=X",
+}
+
+ASIA_MARKETS = {
+    "Singapore STI": "^STI",
+    "Hong Kong HSI": "^HSI",
+    "China Shanghai Composite": "000001.SS",
+    "Japan Nikkei 225": "^N225",
+    "South Korea KOSPI": "^KS11",
+    "India Nifty 50": "^NSEI",
 }
 
 MAGNIFICENT_7 = {
@@ -43,514 +68,514 @@ MAGNIFICENT_7 = {
     "Microsoft": "MSFT",
     "Alphabet": "GOOGL",
     "Amazon": "AMZN",
-    "Nvidia": "NVDA",
     "Meta": "META",
+    "Nvidia": "NVDA",
     "Tesla": "TSLA",
 }
 
-INTEREST_RATE_WATCH = {
-    "US 3M Treasury Yield": "^IRX",
-    "US 5Y Treasury Yield": "^FVX",
+STRUCTURED_NOTE_WATCHLIST = {
+    "US Tech": ["AAPL", "MSFT", "NVDA", "META", "AMZN", "GOOGL", "TSLA"],
+    "US Banks": ["JPM", "BAC", "C", "GS", "MS"],
+    "US Semiconductors": ["NVDA", "AMD", "AVGO", "TSM"],
+    "China Tech": ["BABA", "9988.HK", "0700.HK", "JD", "PDD"],
+    "Singapore Banks": ["D05.SI", "O39.SI", "U11.SI"],
+    "Singapore REITs": ["C38U.SI", "A17U.SI", "M44U.SI"],
+}
+
+BOND_MARKET_WATCHLIST = {
     "US 10Y Treasury Yield": "^TNX",
-    "US 30Y Treasury Yield": "^TYX",
-    "USD/SGD": "SGD=X",
-    "Singapore REIT Proxy": "C38U.SI",
-    "STI Proxy": "^STI",
-}
-
-FX_AGAINST_SGD = {
-    "USD/SGD": "SGD=X",
-    "EUR/SGD": "EURSGD=X",
-    "GBP/SGD": "GBPSGD=X",
-    "AUD/SGD": "AUDSGD=X",
-    "JPY/SGD": "JPYSGD=X",
-    "CNH/SGD": "CNHSGD=X",
-}
-
-COMMODITIES_FX_CRYPTO = {
-    "Gold": "GC=F",
-    "Silver": "SI=F",
-    "Brent Oil": "BZ=F",
-    "Bitcoin": "BTC-USD",
-    "Ethereum": "ETH-USD",
-    "USD/SGD": "SGD=X",
-    "US 10Y Treasury": "^TNX",
-}
-
-STRUCTURED_NOTES_WATCHLIST = {
-    "US Magnificent 7": MAGNIFICENT_7,
-    "US Software": {
-        "Microsoft": "MSFT",
-        "Salesforce": "CRM",
-        "Adobe": "ADBE",
-        "ServiceNow": "NOW",
-        "Oracle": "ORCL",
-    },
-    "US Semiconductors": {
-        "Nvidia": "NVDA",
-        "AMD": "AMD",
-        "Broadcom": "AVGO",
-        "Qualcomm": "QCOM",
-        "Intel": "INTC",
-    },
-    "US Pharmaceuticals": {
-        "Eli Lilly": "LLY",
-        "Johnson & Johnson": "JNJ",
-        "Merck": "MRK",
-        "Pfizer": "PFE",
-        "AbbVie": "ABBV",
-    },
-    "US Financials": {
-        "JPMorgan": "JPM",
-        "Bank of America": "BAC",
-        "Goldman Sachs": "GS",
-        "Morgan Stanley": "MS",
-        "Citigroup": "C",
-    },
-    "Singapore Banks": {
-        "DBS": "D05.SI",
-        "OCBC": "O39.SI",
-        "UOB": "U11.SI",
-    },
-    "Singapore REITs": {
-        "CICT": "C38U.SI",
-        "Ascendas REIT": "A17U.SI",
-        "Mapletree Logistics Trust": "M44U.SI",
-        "Mapletree Industrial Trust": "ME8U.SI",
-    },
-    "China Tech": {
-        "Alibaba": "9988.HK",
-        "Tencent": "0700.HK",
-        "Meituan": "3690.HK",
-        "JD.com": "9618.HK",
-        "Baidu": "9888.HK",
-    },
+    "US 2Y Treasury Yield": "^IRX",
+    "Investment Grade Bond ETF": "LQD",
+    "High Yield Bond ETF": "HYG",
+    "Long Treasury Bond ETF": "TLT",
+    "Intermediate Treasury Bond ETF": "IEF",
 }
 
 
-UNIT_TRUST_FOCUS = {
-    "US Technology / AI": {
-        "Fund Names": [
-            "Franklin Technology Fund",
-            "Allianz Global Artificial Intelligence",
-            "BlackRock World Technology Fund",
-        ],
-        "Drivers": {
-            "Nasdaq": "^IXIC",
-            "Nvidia": "NVDA",
-            "Microsoft": "MSFT",
-            "Broadcom": "AVGO",
-        },
-    },
-    "Income Funds": {
-        "Fund Names": [
-            "PIMCO GIS Income Fund",
-            "Allianz Income and Growth",
-            "JPMorgan Income Fund",
-        ],
-        "Drivers": {
-            "US 10Y Treasury": "^TNX",
-            "S&P 500": "^GSPC",
-            "USD/SGD": "SGD=X",
-        },
-    },
-    "Bond Funds": {
-        "Fund Names": [
-            "PIMCO GIS Global Bond Fund",
-            "AB Global Bond Portfolio",
-            "Fidelity Global Bond Fund",
-        ],
-        "Drivers": {
-            "US 10Y Treasury": "^TNX",
-            "USD/SGD": "SGD=X",
-            "Gold": "GC=F",
-        },
-    },
-}
+# =========================
+# HELPER FUNCTIONS
+# =========================
 
-
-def get_market_data(ticker):
+def get_price_change(ticker):
     try:
-        data = yf.Ticker(ticker).history(period="5d", auto_adjust=False)
+        data = yf.download(
+            ticker,
+            period="5d",
+            progress=False,
+            auto_adjust=True
+        )
 
         if data.empty or len(data) < 2:
-            return {
-                "price": "N/A",
-                "daily_change": "N/A",
-                "five_day_change": "N/A",
-                "status": "Insufficient data",
-            }
+            return None
 
         latest = float(data["Close"].iloc[-1])
         previous = float(data["Close"].iloc[-2])
-        first = float(data["Close"].iloc[0])
+        change = ((latest - previous) / previous) * 100
 
-        daily_change = ((latest - previous) / previous) * 100
-        five_day_change = ((latest - first) / first) * 100
+        return latest, change
 
-        return {
-            "price": round(latest, 4),
-            "daily_change": round(daily_change, 2),
-            "five_day_change": round(five_day_change, 2),
-            "status": "OK",
-        }
-
-    except Exception as e:
-        return {
-            "price": "N/A",
-            "daily_change": "N/A",
-            "five_day_change": "N/A",
-            "status": str(e),
-        }
+    except Exception:
+        return None
 
 
-def format_change(change):
-    if isinstance(change, (int, float)):
-        color = "green" if change >= 0 else "red"
-        arrow = "▲" if change >= 0 else "▼"
-        return f'<span style="color:{color}; font-weight:bold;">{arrow} {abs(change):.2f}%</span>'
-    return '<span style="color:#999999;">Data unavailable</span>'
+def direction_icon(change):
+    if change > 0:
+        return "▲"
+    elif change < 0:
+        return "▼"
+    return "–"
 
 
-def average_daily_change(items):
-    changes = []
-    for name, ticker in items.items():
-        data = get_market_data(ticker)
-        if isinstance(data["daily_change"], (int, float)):
-            changes.append(data["daily_change"])
-    return round(sum(changes) / len(changes), 2) if changes else None
+# =========================
+# EMAIL SECTIONS
+# =========================
 
-
-def build_table(title, items):
-    rows = ""
-    for name, ticker in items.items():
-        data = get_market_data(ticker)
-        rows += f"""
-        <tr>
-            <td>{name}</td>
-            <td>{ticker}</td>
-            <td>{data["price"]}</td>
-            <td>{format_change(data["daily_change"])}</td>
-            <td>{format_change(data["five_day_change"])}</td>
-        </tr>
-        """
-
+def generate_executive_summary():
     return f"""
-    <h2>{title}</h2>
-    <table>
-        <tr>
-            <th>Name</th>
-            <th>Ticker</th>
-            <th>Latest</th>
-            <th>Daily Change</th>
-            <th>5-Day Change</th>
-        </tr>
-        {rows}
-    </table>
-    """
+    <h1>Global Watch - {TODAY}</h1>
 
+    <p><b>Generated:</b> {GENERATED_TIME}</p>
 
-def calculate_sector_performance():
-    sector_scores = []
+    <h2>🧭 Executive Summary</h2>
 
-    for sector, names in STRUCTURED_NOTES_WATCHLIST.items():
-        avg = average_daily_change(names)
-        if avg is not None:
-            sector_scores.append({
-                "sector": sector,
-                "average_change": avg,
-            })
-
-    sector_scores.sort(key=lambda x: x["average_change"], reverse=True)
-    return sector_scores
-
-
-def build_theme_table(title, themes):
-    rows = ""
-    for rank, item in enumerate(themes, start=1):
-        rows += f"""
-        <tr>
-            <td>{rank}</td>
-            <td>{item["sector"]}</td>
-            <td>{format_change(item["average_change"])}</td>
-        </tr>
-        """
-
-    return f"""
-    <h2>{title}</h2>
-    <table>
-        <tr>
-            <th>Rank</th>
-            <th>Theme</th>
-            <th>Average Daily Performance</th>
-        </tr>
-        {rows}
-    </table>
-    """
-
-
-def get_market_regime():
-    spx = get_market_data("^GSPC")
-    nasdaq = get_market_data("^IXIC")
-    btc = get_market_data("BTC-USD")
-    gold = get_market_data("GC=F")
-
-    risk_score = 0
-
-    for item in [spx, nasdaq, btc]:
-        if isinstance(item["daily_change"], (int, float)) and item["daily_change"] > 0:
-            risk_score += 1
-
-    if isinstance(gold["daily_change"], (int, float)) and gold["daily_change"] > 0:
-        risk_score -= 1
-
-    if risk_score >= 2:
-        return "RISK ON"
-    elif risk_score <= 0:
-        return "RISK OFF"
-    return "MIXED"
-
-
-def build_interest_rate_outlook():
-    us10y = get_market_data("^TNX")
-    us5y = get_market_data("^FVX")
-    usdsgd = get_market_data("SGD=X")
-    sg_reit = get_market_data("C38U.SI")
-
-    if isinstance(us10y["five_day_change"], (int, float)) and us10y["five_day_change"] > 0:
-        usd_rate_view = "USD rates are showing upward pressure. This may support USD strength but can pressure bonds, REITs and long-duration assets."
-    elif isinstance(us10y["five_day_change"], (int, float)) and us10y["five_day_change"] < 0:
-        usd_rate_view = "USD rates are easing. This may support bond prices, REITs and income funds."
-    else:
-        usd_rate_view = "USD rate direction is mixed or data is limited."
-
-    if isinstance(usdsgd["five_day_change"], (int, float)) and usdsgd["five_day_change"] > 0:
-        sgd_view = "USD/SGD is rising, which means SGD is weaker against USD over the short term."
-    elif isinstance(usdsgd["five_day_change"], (int, float)) and usdsgd["five_day_change"] < 0:
-        sgd_view = "USD/SGD is falling, which means SGD is stronger against USD over the short term."
-    else:
-        sgd_view = "SGD direction is mixed or data is limited."
-
-    return f"""
-    <h2>Interest Rate Outlook: USD and SGD</h2>
-    <p><strong>USD Rates:</strong> {usd_rate_view}</p>
-    <p><strong>SGD View:</strong> {sgd_view}</p>
     <p>
-        For Singapore clients, higher USD yields may support income conversations but can create mark-to-market pressure on bond funds and REITs.
-        Lower yields may improve sentiment for fixed income, REITs and multi-asset income strategies.
+    Today’s briefing covers global news, global markets, Asia outlook,
+    Magnificent 7, USD/SGD, interest rates, structured note ideas,
+    bond ideas, unit trust themes and FA client talking points.
     </p>
-    {build_table("Interest Rate Watchlist", INTEREST_RATE_WATCH)}
-    """
 
-
-def build_fx_view():
-    usdsgd = get_market_data("SGD=X")
-
-    if isinstance(usdsgd["five_day_change"], (int, float)) and usdsgd["five_day_change"] > 0:
-        view = "SGD has weakened against USD. Clients with USD assets may benefit from translation gains, while SGD-based investors buying USD assets may face higher entry cost."
-    elif isinstance(usdsgd["five_day_change"], (int, float)) and usdsgd["five_day_change"] < 0:
-        view = "SGD has strengthened against USD. This may reduce SGD cost for USD investments, but may reduce translated gains from existing USD holdings."
-    else:
-        view = "FX direction is mixed or data is limited."
-
-    return f"""
-    <h2>FX Views Against SGD</h2>
-    <p>{view}</p>
-    {build_table("Major FX Against SGD", FX_AGAINST_SGD)}
-    """
-
-
-def build_overall_summary(top_5, bottom_5):
-    regime = get_market_regime()
-    strongest = top_5[0]["sector"] if top_5 else "N/A"
-    weakest = bottom_5[0]["sector"] if bottom_5 else "N/A"
-    mag7_avg = average_daily_change(MAGNIFICENT_7)
-    usdsgd = get_market_data("SGD=X")
-    us10y = get_market_data("^TNX")
-
-    return f"""
-    <h2>Overall Summary</h2>
-    <ul>
-        <li><strong>Market Regime:</strong> {regime}</li>
-        <li><strong>Strongest Theme:</strong> {strongest}</li>
-        <li><strong>Weakest Theme:</strong> {weakest}</li>
-        <li><strong>Magnificent 7 Average Daily Move:</strong> {format_change(mag7_avg)}</li>
-        <li><strong>US 10Y Yield Short-Term Move:</strong> {format_change(us10y["five_day_change"])}</li>
-        <li><strong>USD/SGD Short-Term Move:</strong> {format_change(usdsgd["five_day_change"])}</li>
-    </ul>
     <p>
-        FA discussion angle: use this briefing to frame client conversations around portfolio resilience, income sustainability,
-        FX exposure, rate sensitivity, and structured note underlying quality. This is for market preparation only and not a product recommendation.
+    <b>Overall FA Message:</b><br>
+    Markets remain opportunity-rich but selective. Clients should review
+    portfolio allocation, liquidity needs, income requirements, risk tolerance,
+    FX exposure and estate planning gaps.
     </p>
     """
 
 
-def get_news():
-    news_html = ""
+def generate_news_section():
+    html = "<h2>📰 Major News</h2>"
 
     for source, url in NEWS_FEEDS.items():
-        news_html += f"<h3>{source}</h3><ul>"
+        html += f"<h3>{source}</h3><ul>"
 
         try:
             feed = feedparser.parse(url)
-            entries = feed.entries[:5]
 
-            if not entries:
-                news_html += "<li>No headlines available.</li>"
-
-            for entry in entries:
+            for entry in feed.entries[:5]:
                 title = entry.get("title", "No title")
                 link = entry.get("link", "#")
-                news_html += f'<li><a href="{link}">{title}</a></li>'
+                html += f'<li><a href="{link}">{title}</a></li>'
 
-        except Exception as e:
-            news_html += f"<li>Unable to load headlines: {e}</li>"
+        except Exception:
+            html += f"<li>Unable to pull news from {source}</li>"
 
-        news_html += "</ul>"
-
-    return news_html
-
-
-def build_structured_notes_watchlist():
-    html = "<h2>Structured Notes Watchlist</h2>"
-    for sector, names in STRUCTURED_NOTES_WATCHLIST.items():
-        html += build_table(sector, names)
-    return html
-
-
-def build_unit_trust_focus():
-    html = "<h2>Dynamic Unit Trust Focus</h2>"
-
-    for category, details in UNIT_TRUST_FOCUS.items():
-        funds = details["Fund Names"]
-        drivers = details["Drivers"]
-        avg_driver = average_daily_change(drivers)
-        fund_list = "".join([f"<li>{fund}</li>" for fund in funds])
-
-        html += f"""
-        <h3>{category}</h3>
-        <p><strong>Fund Names:</strong></p>
-        <ul>{fund_list}</ul>
-        <p><strong>Average Driver Performance Today:</strong> {format_change(avg_driver)}</p>
-        {build_table("Live Market Drivers", drivers)}
-        """
+        html += "</ul>"
 
     return html
 
 
-def build_compliance_note():
-    return """
-    <h2>Compliance Note</h2>
+def generate_market_summary():
+    html = "<h2>🌍 Global Market Summary</h2><ul>"
+
+    for name, ticker in GLOBAL_MARKETS.items():
+        result = get_price_change(ticker)
+
+        if result:
+            latest, change = result
+            icon = direction_icon(change)
+            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
+        else:
+            html += f"<li><b>{name}</b>: Data unavailable</li>"
+
+    html += "</ul>"
+
+    html += """
     <p>
-        This briefing is for general market information and FA discussion preparation only.
-        It is not a recommendation, offer, solicitation, or personal financial advice.
-        Any product recommendation must be based on the client’s needs, risk profile,
-        investment objectives, financial situation, knowledge, experience and suitability assessment.
+    <b>Market View:</b><br>
+    Global markets remain driven by interest-rate expectations, inflation data,
+    corporate earnings, geopolitical risk and liquidity conditions.
+    </p>
+    """
+
+    return html
+
+
+def generate_asia_outlook():
+    html = "<h2>🌏 Asia Outlook</h2><ul>"
+
+    for name, ticker in ASIA_MARKETS.items():
+        result = get_price_change(ticker)
+
+        if result:
+            latest, change = result
+            icon = direction_icon(change)
+            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
+        else:
+            html += f"<li><b>{name}</b>: Data unavailable</li>"
+
+    html += "</ul>"
+
+    html += """
+    <p>
+    <b>FA Asia View:</b><br>
+    Asia remains mixed. Singapore offers dividend and income opportunities,
+    Japan is supported by corporate reforms, India remains a long-term growth
+    market, while China and Hong Kong depend on policy support and investor confidence.
+    </p>
+    """
+
+    return html
+
+
+def generate_magnificent_7():
+    html = "<h2>🇺🇸 Magnificent 7 Watch</h2><ul>"
+
+    for name, ticker in MAGNIFICENT_7.items():
+        result = get_price_change(ticker)
+
+        if result:
+            latest, change = result
+            icon = direction_icon(change)
+            html += f"<li><b>{name}</b>: US${latest:.2f} ({icon} {change:.2f}%)</li>"
+        else:
+            html += f"<li><b>{name}</b>: Data unavailable</li>"
+
+    html += "</ul>"
+
+    html += """
+    <p>
+    <b>FA View:</b><br>
+    The Magnificent 7 remains important for US equity sentiment, but concentration
+    risk is high. Clients with heavy US tech exposure should review diversification.
+    </p>
+    """
+
+    return html
+
+
+def generate_fx_and_rates():
+    usd_sgd = get_price_change("SGD=X")
+
+    html = "<h2>💵 FX & Interest Rate Outlook</h2>"
+
+    if usd_sgd:
+        latest, change = usd_sgd
+        icon = direction_icon(change)
+        html += f"<p><b>USD/SGD:</b> {latest:.4f} ({icon} {change:.2f}%)</p>"
+    else:
+        html += "<p><b>USD/SGD:</b> Data unavailable</p>"
+
+    html += """
+    <p>
+    <b>USD Interest Rate View:</b><br>
+    US rate expectations remain a key market driver. If inflation remains sticky,
+    rates may stay higher for longer. If growth slows, markets may price more rate cuts.
+    </p>
+
+    <p>
+    <b>SGD Interest Rate View:</b><br>
+    Singapore rates are influenced by USD rates, liquidity and MAS exchange-rate policy.
+    SGD money market and short-duration income products remain useful for liquidity clients.
+    </p>
+
+    <p>
+    <b>FX View Against SGD:</b><br>
+    A strong USD benefits USD asset holders but introduces currency risk for SGD-based clients.
+    </p>
+    """
+
+    return html
+
+
+def generate_structured_notes_watchlist():
+    html = "<h2>📊 Structured Notes Underlying Watchlist</h2>"
+
+    for sector, tickers in STRUCTURED_NOTE_WATCHLIST.items():
+        html += f"<h3>{sector}</h3><ul>"
+
+        for ticker in tickers:
+            result = get_price_change(ticker)
+
+            if result:
+                latest, change = result
+                icon = direction_icon(change)
+                html += f"<li><b>{ticker}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
+            else:
+                html += f"<li><b>{ticker}</b>: Data unavailable</li>"
+
+        html += "</ul>"
+
+    return html
+
+
+def generate_sn_ideas():
+    return """
+    <h2>💡 Structured Note Ideas</h2>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+        <tr>
+            <th>Theme</th>
+            <th>Potential Underlyings</th>
+            <th>Indicative Tenor</th>
+            <th>Indicative Coupon Range*</th>
+            <th>Client Type</th>
+        </tr>
+
+        <tr>
+            <td>Singapore Banks</td>
+            <td>DBS / OCBC / UOB</td>
+            <td>6-12 months</td>
+            <td>5% - 8%</td>
+            <td>Conservative income clients</td>
+        </tr>
+
+        <tr>
+            <td>US Banks</td>
+            <td>JPM / BAC / GS / MS</td>
+            <td>6-12 months</td>
+            <td>7% - 10%</td>
+            <td>Income clients</td>
+        </tr>
+
+        <tr>
+            <td>US Technology</td>
+            <td>Apple / Microsoft / Meta / Amazon</td>
+            <td>6-12 months</td>
+            <td>7% - 12%</td>
+            <td>Growth and income clients</td>
+        </tr>
+
+        <tr>
+            <td>Semiconductors / AI</td>
+            <td>Nvidia / AMD / Broadcom / TSMC</td>
+            <td>6-12 months</td>
+            <td>8% - 15%</td>
+            <td>Aggressive clients</td>
+        </tr>
+
+        <tr>
+            <td>China Technology</td>
+            <td>Alibaba / Tencent / JD / PDD</td>
+            <td>6-12 months</td>
+            <td>10% - 18%</td>
+            <td>Aggressive clients</td>
+        </tr>
+
+        <tr>
+            <td>Singapore REITs</td>
+            <td>CapitaLand / Ascendas / Mapletree</td>
+            <td>6-12 months</td>
+            <td>6% - 9%</td>
+            <td>Income-focused clients</td>
+        </tr>
+    </table>
+
+    <p style="font-size:12px;">
+    *Coupon ranges are indicative only and change daily based on volatility,
+    issuer pricing, tenor, barrier level, autocall frequency and market conditions.
+    </p>
+
+    <p>
+    <b>SN Suitability Checklist:</b><br>
+    • Explain worst-performing underlying risk.<br>
+    • Explain knock-in, autocall, issuer and liquidity risk.<br>
+    • Confirm whether the client can hold to maturity.<br>
+    • Confirm whether the client can accept receiving shares if knock-in occurs.<br>
+    • Notes are not fixed deposits and capital is not guaranteed unless stated.
     </p>
     """
 
 
-def build_email_html():
-    sector_scores = calculate_sector_performance()
-    top_5 = sector_scores[:5]
-    bottom_5 = sorted(sector_scores, key=lambda x: x["average_change"])[:5]
+def generate_bond_market_watch():
+    html = "<h2>🏦 Bond Market Watch</h2><ul>"
 
-    return f"""
+    for name, ticker in BOND_MARKET_WATCHLIST.items():
+        result = get_price_change(ticker)
+
+        if result:
+            latest, change = result
+            icon = direction_icon(change)
+            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
+        else:
+            html += f"<li><b>{name}</b>: Data unavailable</li>"
+
+    html += "</ul>"
+
+    html += """
+    <p>
+    <b>Bond Market View:</b><br>
+    Bond opportunities remain linked to the rate cycle. If rates peak or fall,
+    longer-duration bonds may benefit. If rates stay higher for longer,
+    short-duration and investment grade bonds may be more suitable.
+    </p>
+    """
+
+    return html
+
+
+def generate_bond_ideas():
+    return """
+    <h2>💡 Bond Ideas</h2>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+        <tr>
+            <th>Bond Theme</th>
+            <th>Potential Area</th>
+            <th>Risk Level</th>
+            <th>Suitable For</th>
+        </tr>
+
+        <tr>
+            <td>SGD Investment Grade Bonds</td>
+            <td>Local banks, quality corporates, statutory-board linked issuers</td>
+            <td>Low to Medium</td>
+            <td>Conservative SGD income clients</td>
+        </tr>
+
+        <tr>
+            <td>USD Investment Grade Bonds</td>
+            <td>Global banks, quality corporates, sovereign-linked issuers</td>
+            <td>Medium</td>
+            <td>Clients comfortable with USD exposure</td>
+        </tr>
+
+        <tr>
+            <td>Short Duration Bonds</td>
+            <td>1-3 year bond funds or short maturity bonds</td>
+            <td>Low to Medium</td>
+            <td>Cash-heavy clients</td>
+        </tr>
+
+        <tr>
+            <td>Asia Investment Grade Bonds</td>
+            <td>Asia IG bond funds</td>
+            <td>Medium</td>
+            <td>Income and diversification clients</td>
+        </tr>
+
+        <tr>
+            <td>High Yield Bonds</td>
+            <td>Global or Asia high yield bond funds</td>
+            <td>High</td>
+            <td>Aggressive income clients</td>
+        </tr>
+
+        <tr>
+            <td>Long Duration Bonds</td>
+            <td>Long maturity government or IG bonds</td>
+            <td>Medium to High</td>
+            <td>Clients expecting rate cuts</td>
+        </tr>
+    </table>
+
+    <p>
+    <b>Bond Suitability Checklist:</b><br>
+    • Is the client investing for income, liquidity or capital gain?<br>
+    • Is the bond SGD or USD denominated?<br>
+    • What is the credit quality?<br>
+    • What is the duration and interest-rate sensitivity?<br>
+    • Does the client understand bonds can fall in value before maturity?
+    </p>
+    """
+
+
+def generate_unit_trust_section():
+    return """
+    <h2>📈 Unit Trust Ideas</h2>
+
+    <ul>
+        <li>Global equity funds for long-term growth</li>
+        <li>Asia income funds for regional diversification</li>
+        <li>Investment grade bond funds for income and stability</li>
+        <li>Money market funds for liquidity parking</li>
+        <li>Technology funds for higher-risk growth allocation</li>
+        <li>Healthcare funds for defensive growth exposure</li>
+        <li>Multi-asset income funds for balanced clients</li>
+    </ul>
+
+    <p>
+    <b>FA Note:</b><br>
+    Please verify actual fund performance, risk rating, platform availability,
+    expense ratio and client suitability before recommendation.
+    </p>
+    """
+
+
+def generate_fa_talking_points():
+    return """
+    <h2>🗣 FA Talking Points</h2>
+
+    <ul>
+        <li><b>Conservative clients:</b> Money market funds, short-duration bonds, investment grade bonds and SGD income solutions.</li>
+        <li><b>Income clients:</b> Dividend equities, REITs, multi-asset income funds, bond funds and structured income solutions.</li>
+        <li><b>Growth clients:</b> US equities, Magnificent 7, Asia growth, India, technology and healthcare themes.</li>
+        <li><b>Cash-heavy clients:</b> Explain reinvestment risk, inflation erosion and staged deployment.</li>
+        <li><b>Volatility-worried clients:</b> Use diversification, phased entry, income buckets and time horizon planning.</li>
+        <li><b>HNW clients:</b> Estate planning, universal life, premium financing, trust planning, corporate cash and legacy equalisation.</li>
+    </ul>
+    """
+
+
+# =========================
+# BUILD EMAIL
+# =========================
+
+def build_email_body():
+    html = """
     <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                font-size: 14px;
-                color: #222222;
-                line-height: 1.5;
-            }}
-            h1 {{
-                color: #0B3D2E;
-            }}
-            h2 {{
-                color: #0B3D2E;
-                border-bottom: 2px solid #0B3D2E;
-                padding-bottom: 4px;
-                margin-top: 28px;
-            }}
-            h3 {{
-                color: #155E45;
-            }}
-            table {{
-                border-collapse: collapse;
-                width: 100%;
-                margin-bottom: 22px;
-            }}
-            th {{
-                background-color: #0B3D2E;
-                color: white;
-                padding: 8px;
-                border: 1px solid #dddddd;
-                text-align: left;
-            }}
-            td {{
-                padding: 8px;
-                border: 1px solid #dddddd;
-            }}
-            tr:nth-child(even) {{
-                background-color: #f7f7f7;
-            }}
-            a {{
-                color: #0B5CAD;
-                text-decoration: none;
-            }}
-            .small {{
-                font-size: 12px;
-                color: #666666;
-            }}
-        </style>
-    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+    """
 
-    <body>
-        <h1>Global Watch FA CIO Market Briefing - {TODAY}</h1>
-        <p class="small">Generated: {GENERATED_TIME}</p>
+    html += generate_executive_summary()
+    html += generate_news_section()
+    html += generate_market_summary()
+    html += generate_asia_outlook()
+    html += generate_magnificent_7()
+    html += generate_fx_and_rates()
+    html += generate_structured_notes_watchlist()
+    html += generate_sn_ideas()
+    html += generate_bond_market_watch()
+    html += generate_bond_ideas()
+    html += generate_unit_trust_section()
+    html += generate_fa_talking_points()
 
-        {build_overall_summary(top_5, bottom_5)}
+    html += """
+    <hr>
 
-        {build_table("Global Markets", GLOBAL_MARKETS)}
+    <p style="font-size: 12px; color: gray;">
+    Disclaimer: This briefing is for information and discussion purposes only.
+    It is not financial advice, not a product recommendation and does not take
+    into account any client’s personal objectives, financial situation or needs.
+    Please conduct proper fact-find, risk profiling, product due diligence and
+    suitability assessment before making any recommendation.
+    </p>
 
-        {build_table("US Magnificent 7", MAGNIFICENT_7)}
-
-        {build_interest_rate_outlook()}
-
-        {build_fx_view()}
-
-        {build_table("Commodities / FX / Crypto", COMMODITIES_FX_CRYPTO)}
-
-        {build_theme_table("Top Performing Themes Today", top_5)}
-
-        {build_theme_table("Weakest Themes Today", bottom_5)}
-
-        {build_structured_notes_watchlist()}
-
-        {build_unit_trust_focus()}
-
-        <h2>News Headlines</h2>
-        {get_news()}
-
-        {build_compliance_note()}
     </body>
     </html>
     """
 
+    return html
+
+
+# =========================
+# SEND EMAIL
+# =========================
 
 def send_email():
     if not EMAIL_FROM or not EMAIL_PASSWORD or not EMAIL_TO:
-        raise ValueError("Missing email settings. Check EMAIL_FROM, EMAIL_PASSWORD and EMAIL_TO in .env file.")
+        raise ValueError(
+            "Missing email settings. Please check EMAIL_FROM, EMAIL_PASSWORD and EMAIL_TO in your .env file."
+        )
+
+    subject = f"Global Watch - {TODAY}"
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Global Watch FA CIO Market Briefing - {TODAY}"
     msg["From"] = EMAIL_FROM
     msg["To"] = EMAIL_TO
+    msg["Subject"] = subject
 
-    html_body = build_email_html()
+    html_body = build_email_body()
     msg.attach(MIMEText(html_body, "html"))
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
@@ -558,10 +583,16 @@ def send_email():
         server.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
 
 
+# =========================
+# MAIN
+# =========================
+
 if __name__ == "__main__":
     try:
         send_email()
         print("Email sent successfully.")
-    except Exception:
-        print("Email failed.")
-        print(traceback.format_exc())
+
+    except Exception as e:
+        print("Error sending email:")
+        print(e)
+        traceback.print_exc()
