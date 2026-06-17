@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 
 import feedparser
 import yfinance as yf
+import pandas as pd
 from dotenv import load_dotenv
 
 
@@ -223,7 +224,8 @@ def generate_executive_summary():
     <p>
     Today’s briefing covers CNBC and CNA news, global markets, Asia outlook,
     Magnificent 7, USD/SGD, interest rates, structured note ideas,
-    bond ideas, unit trust fund outlook and FA client talking points.
+    bond ideas, Fundsupermart top and bottom funds, unit trust sector updates
+    and FA client talking points.
     </p>
 
     <p>
@@ -286,31 +288,26 @@ def generate_asia_outlook():
             <th>Current View</th>
             <th>Key Drivers</th>
         </tr>
-
         <tr>
             <td>Singapore</td>
             <td>Neutral to Positive</td>
             <td>Bank earnings, dividend support, REIT recovery, SGD stability</td>
         </tr>
-
         <tr>
             <td>Hong Kong / China</td>
             <td>Neutral to Recovery Watch</td>
             <td>Policy support, tech sentiment, property stabilisation, investor confidence</td>
         </tr>
-
         <tr>
             <td>Japan</td>
             <td>Positive</td>
             <td>Corporate reforms, shareholder returns, weaker Yen</td>
         </tr>
-
         <tr>
             <td>India</td>
             <td>Positive Long Term</td>
             <td>Economic growth, demographics, infrastructure spending, domestic consumption</td>
         </tr>
-
         <tr>
             <td>South Korea</td>
             <td>Positive</td>
@@ -338,28 +335,24 @@ def generate_asia_outlook():
             <th>Client Type</th>
             <th>Key Risk</th>
         </tr>
-
         <tr>
             <td>Singapore Banks</td>
             <td>DBS / OCBC / UOB</td>
             <td>Conservative income clients</td>
             <td>Bank earnings, rate cycle, market volatility</td>
         </tr>
-
         <tr>
             <td>Singapore REITs</td>
             <td>CapitaLand Integrated / Ascendas / Mapletree Logistics</td>
             <td>Income clients</td>
             <td>Interest rates, refinancing cost, property cycle</td>
         </tr>
-
         <tr>
             <td>China Tech</td>
             <td>Alibaba / Tencent / JD / Meituan</td>
             <td>Aggressive clients</td>
             <td>Policy risk, earnings risk, volatility</td>
         </tr>
-
         <tr>
             <td>Asia Semiconductors</td>
             <td>TSMC / Samsung / SK Hynix</td>
@@ -367,13 +360,6 @@ def generate_asia_outlook():
             <td>AI cycle, chip demand, geopolitical risk</td>
         </tr>
     </table>
-
-    <p>
-    <b>FA Asia Talking Point:</b><br>
-    Asia remains important for long-term allocation. Singapore offers income,
-    Japan benefits from reforms, India remains a structural growth story,
-    while China and Hong Kong offer recovery potential with higher volatility.
-    </p>
     """
 
     return html
@@ -455,7 +441,6 @@ def generate_sn_ideas():
             <th>Indicative Coupon Range*</th>
             <th>Client Type</th>
         </tr>
-
         <tr>
             <td>Singapore Banks</td>
             <td>DBS / OCBC / UOB</td>
@@ -463,7 +448,6 @@ def generate_sn_ideas():
             <td>5% - 8%</td>
             <td>Conservative income clients</td>
         </tr>
-
         <tr>
             <td>US Banks</td>
             <td>JPM / BAC / GS / MS</td>
@@ -471,7 +455,6 @@ def generate_sn_ideas():
             <td>7% - 10%</td>
             <td>Income clients</td>
         </tr>
-
         <tr>
             <td>US Technology</td>
             <td>Apple / Microsoft / Meta / Amazon</td>
@@ -479,7 +462,6 @@ def generate_sn_ideas():
             <td>7% - 12%</td>
             <td>Growth and income clients</td>
         </tr>
-
         <tr>
             <td>Semiconductors / AI</td>
             <td>Nvidia / AMD / Broadcom / TSMC</td>
@@ -487,7 +469,6 @@ def generate_sn_ideas():
             <td>8% - 15%</td>
             <td>Aggressive clients</td>
         </tr>
-
         <tr>
             <td>China Technology</td>
             <td>Alibaba / Tencent / JD / PDD</td>
@@ -500,15 +481,6 @@ def generate_sn_ideas():
     <p style="font-size:12px;">
     *Coupon ranges are indicative only and change daily based on volatility,
     issuer pricing, tenor, barrier level, autocall frequency and market conditions.
-    </p>
-
-    <p>
-    <b>SN Suitability Checklist:</b><br>
-    • Explain worst-performing underlying risk.<br>
-    • Explain knock-in, autocall, issuer and liquidity risk.<br>
-    • Confirm whether the client can hold to maturity.<br>
-    • Confirm whether the client can accept receiving shares if knock-in occurs.<br>
-    • Notes are not fixed deposits and capital is not guaranteed unless stated.
     </p>
     """
 
@@ -551,7 +523,10 @@ def get_fsm_best_worst_funds():
             "User-Agent": "Mozilla/5.0"
         }
 
-        tables = pd.read_html(url)
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+
+        tables = pd.read_html(response.text)
 
         if not tables:
             return None, None
@@ -668,7 +643,6 @@ def generate_unit_trust_section():
         """
 
     html += """
-
     <h3>🌍 Unit Trust Sector Updates</h3>
 
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
@@ -678,95 +652,36 @@ def generate_unit_trust_section():
             <th>Client Type</th>
             <th>FA Action</th>
         </tr>
-        <tr>
-            <td>Technology / AI</td>
-            <td>Positive but volatile</td>
-            <td>Aggressive growth clients</td>
-            <td>Use phased entry and avoid over-concentration.</td>
-        </tr>
-        <tr>
-            <td>Healthcare</td>
-            <td>Neutral to Positive</td>
-            <td>Defensive growth clients</td>
-            <td>Useful as a defensive growth allocation.</td>
-        </tr>
-        <tr>
-            <td>Financials</td>
-            <td>Neutral to Positive</td>
-            <td>Income / Balanced clients</td>
-            <td>Check bank earnings, rates and dividend sustainability.</td>
-        </tr>
-        <tr>
-            <td>REITs / Property Income</td>
-            <td>Recovery Watch</td>
-            <td>Income clients</td>
-            <td>Could benefit if rates stabilise or decline.</td>
-        </tr>
-        <tr>
-            <td>Gold / Precious Metals</td>
-            <td>Neutral to Positive</td>
-            <td>Diversification clients</td>
-            <td>Useful as a hedge against geopolitical and currency risk.</td>
-        </tr>
-        <tr>
-            <td>China / Greater China</td>
-            <td>Recovery Watch</td>
-            <td>Aggressive / Contrarian clients</td>
-            <td>Potential rebound, but policy and sentiment risk remain high.</td>
-        </tr>
-        <tr>
-            <td>India</td>
-            <td>Positive Long Term</td>
-            <td>Growth clients</td>
-            <td>Structural growth story, but valuation risk must be explained.</td>
-        </tr>
-        <tr>
-            <td>Japan</td>
-            <td>Positive</td>
-            <td>Growth / Balanced clients</td>
-            <td>Supported by corporate reforms and shareholder returns.</td>
-        </tr>
-        <tr>
-            <td>Investment Grade Bonds</td>
-            <td>Positive</td>
-            <td>Conservative / Income clients</td>
-            <td>Good for income and portfolio stability.</td>
-        </tr>
-        <tr>
-            <td>High Yield Bonds</td>
-            <td>Selective</td>
-            <td>Aggressive income clients</td>
-            <td>Higher yield, but credit risk must be explained clearly.</td>
-        </tr>
+        <tr><td>Technology / AI</td><td>Positive but volatile</td><td>Aggressive growth clients</td><td>Use phased entry and avoid over-concentration.</td></tr>
+        <tr><td>Healthcare</td><td>Neutral to Positive</td><td>Defensive growth clients</td><td>Useful as a defensive growth allocation.</td></tr>
+        <tr><td>Financials</td><td>Neutral to Positive</td><td>Income / Balanced clients</td><td>Check bank earnings, rates and dividend sustainability.</td></tr>
+        <tr><td>REITs / Property Income</td><td>Recovery Watch</td><td>Income clients</td><td>Could benefit if rates stabilise or decline.</td></tr>
+        <tr><td>Gold / Precious Metals</td><td>Neutral to Positive</td><td>Diversification clients</td><td>Useful as a hedge against geopolitical and currency risk.</td></tr>
+        <tr><td>China / Greater China</td><td>Recovery Watch</td><td>Aggressive / Contrarian clients</td><td>Potential rebound, but policy and sentiment risk remain high.</td></tr>
+        <tr><td>India</td><td>Positive Long Term</td><td>Growth clients</td><td>Structural growth story, but valuation risk must be explained.</td></tr>
+        <tr><td>Japan</td><td>Positive</td><td>Growth / Balanced clients</td><td>Supported by corporate reforms and shareholder returns.</td></tr>
+        <tr><td>Investment Grade Bonds</td><td>Positive</td><td>Conservative / Income clients</td><td>Good for income and portfolio stability.</td></tr>
+        <tr><td>High Yield Bonds</td><td>Selective</td><td>Aggressive income clients</td><td>Higher yield, but credit risk must be explained clearly.</td></tr>
     </table>
-
-    <h3>💡 Suggested Unit Trust Positioning</h3>
-
-    <ul>
-        <li><b>Conservative clients:</b> Money market funds, short-duration bond funds, SGD income funds.</li>
-        <li><b>Income clients:</b> Investment grade bond funds, Asia income funds, multi-asset income funds.</li>
-        <li><b>Balanced clients:</b> Global balanced funds, multi-asset funds, dividend income funds.</li>
-        <li><b>Growth clients:</b> Global equity funds, US equity funds, Japan equity funds, India funds.</li>
-        <li><b>Aggressive clients:</b> Technology, AI, healthcare, China recovery and thematic funds.</li>
-    </ul>
 
     <h3>🗣 FA Unit Trust Talking Points</h3>
 
     <ul>
-        <li>Do not leave excess cash idle if the client has medium- to long-term goals.</li>
-        <li>Use phased entry for volatile equity funds.</li>
-        <li>Match fund choice to client time horizon, risk profile and liquidity needs.</li>
-        <li>For income clients, focus on sustainability of payout, not just headline distribution yield.</li>
-        <li>For bond funds, explain duration risk, credit risk and currency risk.</li>
-        <li>For thematic funds, explain concentration risk and volatility.</li>
+        <li>Do not recommend a fund only because it is a weekly top performer.</li>
+        <li>Check 1-week, 1-month, 3-month, YTD, 1-year and 3-year performance.</li>
+        <li>Review fund size, currency, risk rating, fees and distribution policy.</li>
+        <li>Separate short-term momentum from long-term investment quality.</li>
+        <li>Use top and bottom performers as client portfolio review triggers.</li>
     </ul>
 
     <p style="font-size:12px;">
-    Note: Actual fund selection should be verified against the latest fund factsheet,
-    platform availability, risk rating, historical performance, fees, fund size,
-    distribution policy and client suitability.
+    Note: Actual fund selection should be verified against the latest Fundsupermart / FSMOne data,
+    fund factsheet, platform availability, risk rating, fees, fund size, distribution policy
+    and client suitability.
     </p>
     """
+
+    return html
 
 
 def generate_fa_talking_points():
