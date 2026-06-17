@@ -202,7 +202,7 @@ def generate_market_summary():
 
 
 def generate_asia_outlook():
-    html = "<h2>🌏 Asia Outlook</h2><ul>"
+    html = "<h2>🌏 Asia Market Outlook</h2><ul>"
 
     for name, ticker in ASIA_MARKETS.items():
         result = get_price_change(ticker)
@@ -217,11 +217,125 @@ def generate_asia_outlook():
     html += "</ul>"
 
     html += """
+    <h3>📌 Asia Outlook Summary</h3>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+        <tr>
+            <th>Market</th>
+            <th>Current View</th>
+            <th>Key Drivers</th>
+        </tr>
+
+        <tr>
+            <td>Singapore</td>
+            <td>Neutral to Positive</td>
+            <td>Bank earnings, dividend yield support, REIT recovery, SGD stability</td>
+        </tr>
+
+        <tr>
+            <td>Hong Kong</td>
+            <td>Neutral</td>
+            <td>China policy support, tech sentiment, fund flows</td>
+        </tr>
+
+        <tr>
+            <td>China</td>
+            <td>Neutral to Recovery Watch</td>
+            <td>Stimulus, property stabilisation, consumption recovery, investor confidence</td>
+        </tr>
+
+        <tr>
+            <td>Japan</td>
+            <td>Positive</td>
+            <td>Corporate reforms, shareholder returns, inflation normalisation, weaker Yen</td>
+        </tr>
+
+        <tr>
+            <td>India</td>
+            <td>Positive Long Term</td>
+            <td>Economic growth, demographics, infrastructure spending, domestic consumption</td>
+        </tr>
+
+        <tr>
+            <td>South Korea</td>
+            <td>Positive</td>
+            <td>Semiconductor cycle, AI demand, exports, technology recovery</td>
+        </tr>
+    </table>
+
+    <h3>💡 Asia Investment Ideas</h3>
+
+    <ul>
+        <li><b>Singapore Banks:</b> DBS, OCBC, UOB for income and dividend-focused clients.</li>
+        <li><b>Singapore REITs:</b> Recovery theme if rates stabilise or fall.</li>
+        <li><b>Japan Equities:</b> Supported by corporate governance reform and shareholder returns.</li>
+        <li><b>India Equities:</b> Long-term structural growth and consumption theme.</li>
+        <li><b>Asia Investment Grade Bonds:</b> Suitable for income and diversification clients.</li>
+        <li><b>China / Hong Kong Tech:</b> Recovery opportunity, but higher volatility.</li>
+        <li><b>Asia Dividend Funds:</b> Useful for clients seeking income with regional diversification.</li>
+    </ul>
+
+    <h3>🌏 Asia Structured Note Ideas</h3>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+        <tr>
+            <th>Theme</th>
+            <th>Potential Underlyings</th>
+            <th>Client Type</th>
+            <th>Key Risk</th>
+        </tr>
+
+        <tr>
+            <td>Singapore Banks</td>
+            <td>DBS / OCBC / UOB</td>
+            <td>Conservative income clients</td>
+            <td>Bank earnings, rate cycle, market volatility</td>
+        </tr>
+
+        <tr>
+            <td>Singapore REITs</td>
+            <td>CapitaLand Integrated / Ascendas / Mapletree Logistics</td>
+            <td>Income clients</td>
+            <td>Interest rates, refinancing cost, property cycle</td>
+        </tr>
+
+        <tr>
+            <td>China Tech</td>
+            <td>Alibaba / Tencent / JD / Meituan</td>
+            <td>Aggressive clients</td>
+            <td>Policy risk, earnings risk, volatility</td>
+        </tr>
+
+        <tr>
+            <td>Asia Semiconductors</td>
+            <td>TSMC / Samsung / SK Hynix</td>
+            <td>Growth and income clients</td>
+            <td>AI cycle, chip demand, geopolitical risk</td>
+        </tr>
+
+        <tr>
+            <td>Japan Index</td>
+            <td>Nikkei 225 linked structures</td>
+            <td>Moderate to growth clients</td>
+            <td>Yen movement, valuation, export cycle</td>
+        </tr>
+
+        <tr>
+            <td>India Index</td>
+            <td>Nifty 50 linked structures</td>
+            <td>Long-term growth clients</td>
+            <td>Valuation, liquidity, currency risk</td>
+        </tr>
+    </table>
+
+    <h3>🗣 FA Asia Talking Point</h3>
+
     <p>
-    <b>FA Asia View:</b><br>
-    Asia remains mixed. Singapore offers dividend and income opportunities,
-    Japan is supported by corporate reforms, India remains a long-term growth
-    market, while China and Hong Kong depend on policy support and investor confidence.
+    Asia remains one of the most important long-term allocation regions.
+    Singapore offers income and dividend stability, Japan benefits from
+    corporate reforms, India remains a structural growth story, while China
+    and Hong Kong provide recovery potential for investors who can accept
+    higher volatility.
     </p>
     """
 
@@ -247,7 +361,7 @@ def generate_magnificent_7():
     <p>
     <b>FA View:</b><br>
     The Magnificent 7 remains important for US equity sentiment, but concentration
-    risk is high. Clients with heavy US tech exposure should review diversification.
+    risk is high. Clients with heavy US technology exposure should review diversification.
     </p>
     """
 
@@ -282,6 +396,7 @@ def generate_fx_and_rates():
     <p>
     <b>FX View Against SGD:</b><br>
     A strong USD benefits USD asset holders but introduces currency risk for SGD-based clients.
+    SGD-based clients should review whether their portfolio income and liabilities are in the same currency.
     </p>
     """
 
@@ -492,6 +607,8 @@ def generate_unit_trust_section():
         <li>Technology funds for higher-risk growth allocation</li>
         <li>Healthcare funds for defensive growth exposure</li>
         <li>Multi-asset income funds for balanced clients</li>
+        <li>India and Japan funds for Asia growth exposure</li>
+        <li>Asia dividend funds for income clients</li>
     </ul>
 
     <p>
@@ -509,7 +626,7 @@ def generate_fa_talking_points():
     <ul>
         <li><b>Conservative clients:</b> Money market funds, short-duration bonds, investment grade bonds and SGD income solutions.</li>
         <li><b>Income clients:</b> Dividend equities, REITs, multi-asset income funds, bond funds and structured income solutions.</li>
-        <li><b>Growth clients:</b> US equities, Magnificent 7, Asia growth, India, technology and healthcare themes.</li>
+        <li><b>Growth clients:</b> US equities, Magnificent 7, Asia growth, India, Japan, technology and healthcare themes.</li>
         <li><b>Cash-heavy clients:</b> Explain reinvestment risk, inflation erosion and staged deployment.</li>
         <li><b>Volatility-worried clients:</b> Use diversification, phased entry, income buckets and time horizon planning.</li>
         <li><b>HNW clients:</b> Estate planning, universal life, premium financing, trust planning, corporate cash and legacy equalisation.</li>
