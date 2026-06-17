@@ -543,75 +543,131 @@ def generate_bond_ideas():
     """
 
 
-def generate_unit_trust_section():
-    return """
-    <h2>🏆 iFAST Top Funds & Unit Trust Sector Updates</h2>
+def get_fsm_best_worst_funds():
+    url = "https://secure.fundsupermart.com/fsm/tools/best-worst-performer-fund"
 
-    <h3>📌 iFAST Top Funds Weekly Watch</h3>
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        tables = pd.read_html(url)
+
+        if not tables:
+            return None, None
+
+        top_table = tables[0].head(3)
+        bottom_table = tables[-1].head(3)
+
+        return top_table, bottom_table
+
+    except Exception as e:
+        print(f"FSM top/bottom fund pull failed: {e}")
+        return None, None
+
+
+def dataframe_to_html_table(df):
+    if df is None or df.empty:
+        return ""
+
+    return df.to_html(
+        index=False,
+        border=1,
+        escape=False,
+        justify="center"
+    )
+
+
+def generate_unit_trust_section():
+    top_funds, bottom_funds = get_fsm_best_worst_funds()
+
+    html = """
+    <h2>🏆 Fundsupermart / iFAST Top & Bottom Funds</h2>
 
     <p>
-    This section is designed to track iFAST's weekly top-performing and bottom-performing
-    unit trust themes. Please verify the actual fund names, returns, risk ratings and
-    factsheets directly from iFAST before making any client recommendation.
+    This section attempts to pull the latest top and bottom performing funds
+    from Fundsupermart / FSMOne. If the website blocks automated access,
+    please verify directly from the Fundsupermart Best / Worst Performer Fund tool.
     </p>
+    """
 
-    <h3>📈 Top 3 Fund Themes This Week</h3>
+    if top_funds is not None and bottom_funds is not None:
+        html += "<h3>📈 Top 3 Performing Funds</h3>"
+        html += dataframe_to_html_table(top_funds)
 
-    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
-        <tr>
-            <th>Rank</th>
-            <th>Fund / Theme</th>
-            <th>Likely Driver</th>
-            <th>FA Talking Point</th>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td>Top Performing Equity / Sector Fund</td>
-            <td>Momentum, earnings, sector rotation or policy support</td>
-            <td>Check whether performance is sustainable or short-term driven.</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>Top Performing Country / Regional Fund</td>
-            <td>Country rebound, currency movement or valuation recovery</td>
-            <td>Assess whether this fits the client's risk profile and time horizon.</td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td>Top Performing Bond / Income Fund</td>
-            <td>Rate movement, credit spread compression or income demand</td>
-            <td>Review duration, credit risk, currency and distribution sustainability.</td>
-        </tr>
-    </table>
+        html += "<h3>📉 Bottom 3 Performing Funds</h3>"
+        html += dataframe_to_html_table(bottom_funds)
 
-    <h3>📉 Bottom 3 Fund Themes This Week</h3>
+    else:
+        html += """
+        <h3>📈 Top 3 Performing Funds</h3>
 
-    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
-        <tr>
-            <th>Rank</th>
-            <th>Fund / Theme</th>
-            <th>Likely Reason</th>
-            <th>FA Talking Point</th>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td>Weakest Performing Equity / Sector Fund</td>
-            <td>Profit-taking, weak earnings, policy risk or valuation pressure</td>
-            <td>Do not average down blindly; check whether fundamentals have changed.</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>Weakest Performing Country / Regional Fund</td>
-            <td>Currency weakness, capital outflow or macro concerns</td>
-            <td>Use this as a review trigger for existing client holdings.</td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td>Weakest Performing Bond / Income Fund</td>
-            <td>Rate volatility, credit concerns or duration impact</td>
-            <td>Check whether the weakness is mark-to-market or credit-related.</td>
-        </tr>
-    </table>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+            <tr>
+                <th>Rank</th>
+                <th>Fund Name</th>
+                <th>Category / Sector</th>
+                <th>Performance</th>
+                <th>FA Talking Point</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Check latest Fundsupermart Top Performer</td>
+                <td>Verify from FSMOne</td>
+                <td>Verify from FSMOne</td>
+                <td>Check whether performance is sustainable or short-term driven.</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Check latest Fundsupermart Top Performer</td>
+                <td>Verify from FSMOne</td>
+                <td>Verify from FSMOne</td>
+                <td>Assess risk profile, currency and sector concentration.</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Check latest Fundsupermart Top Performer</td>
+                <td>Verify from FSMOne</td>
+                <td>Verify from FSMOne</td>
+                <td>Review whether it fits client time horizon.</td>
+            </tr>
+        </table>
+
+        <h3>📉 Bottom 3 Performing Funds</h3>
+
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+            <tr>
+                <th>Rank</th>
+                <th>Fund Name</th>
+                <th>Category / Sector</th>
+                <th>Performance</th>
+                <th>FA Talking Point</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Check latest Fundsupermart Worst Performer</td>
+                <td>Verify from FSMOne</td>
+                <td>Verify from FSMOne</td>
+                <td>Do not average down blindly; check fundamentals.</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Check latest Fundsupermart Worst Performer</td>
+                <td>Verify from FSMOne</td>
+                <td>Verify from FSMOne</td>
+                <td>Use this as a portfolio review trigger.</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Check latest Fundsupermart Worst Performer</td>
+                <td>Verify from FSMOne</td>
+                <td>Verify from FSMOne</td>
+                <td>Check if weakness is temporary or structural.</td>
+            </tr>
+        </table>
+        """
+
+    html += """
 
     <h3>🌍 Unit Trust Sector Updates</h3>
 
