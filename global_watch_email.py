@@ -89,6 +89,23 @@ BOND_MARKET_WATCHLIST = {
 }
 
 
+UNIT_TRUST_WATCHLIST = {
+    "Allianz Income and Growth": "0P0000S6YQ.SI",
+    "Manulife GMADI": "0P0001IY1U.SI",
+    "Fidelity Global Technology": "0P00000V2I.SI",
+    "JPMorgan ASEAN Fund": "0P00000U7O.SI",
+}
+
+
+def safe_float(value):
+    try:
+        if hasattr(value, "iloc"):
+            value = value.iloc[0]
+        return float(value)
+    except Exception:
+        return None
+
+
 def get_price_change_yfinance(ticker):
     try:
         data = yf.download(
@@ -108,17 +125,11 @@ def get_price_change_yfinance(ticker):
         if len(close) < 2:
             return None
 
-        latest = close.iloc[-1]
-        previous = close.iloc[-2]
+        latest = safe_float(close.iloc[-1])
+        previous = safe_float(close.iloc[-2])
 
-        if hasattr(latest, "iloc"):
-            latest = latest.iloc[0]
-
-        if hasattr(previous, "iloc"):
-            previous = previous.iloc[0]
-
-        latest = float(latest)
-        previous = float(previous)
+        if latest is None or previous is None or previous == 0:
+            return None
 
         change = ((latest - previous) / previous) * 100
         return latest, change
@@ -147,8 +158,11 @@ def get_price_change_yahoo_api(ticker):
 
         latest = float(prices[-1])
         previous = float(prices[-2])
-        change = ((latest - previous) / previous) * 100
 
+        if previous == 0:
+            return None
+
+        change = ((latest - previous) / previous) * 100
         return latest, change
 
     except Exception as e:
@@ -163,21 +177,62 @@ def get_price_change(ticker):
 
     if result:
         latest, change = result
-        print(f"{ticker} from yfinance: {latest:.2f}, {change:.2f}%")
+        print(f"{ticker}: {latest:.2f}, {change:.2f}%")
         return result
 
     result = get_price_change_yahoo_api(ticker)
 
     if result:
         latest, change = result
-        print(f"{ticker} from Yahoo API: {latest:.2f}, {change:.2f}%")
+        print(f"{ticker}: {latest:.2f}, {change:.2f}%")
         return result
 
-    print(f"{ticker}: Data unavailable from both sources")
+    print(f"{ticker}: Data unavailable")
     return None
 
 
+def get_fund_performance(ticker):
+    try:
+        data = yf.download(
+            ticker,
+            period="1y",
+            interval="1d",
+            progress=False,
+            auto_adjust=True,
+            threads=False
+        )
+
+        if data.empty or "Close" not in data:
+            return None
+
+        close = data["Close"].dropna()
+
+        if len(close) < 2:
+            return None
+
+        latest = safe_float(close.iloc[-1])
+        one_week = safe_float(close.iloc[-6]) if len(close) >= 6 else None
+        one_month = safe_float(close.iloc[-22]) if len(close) >= 22 else None
+
+        current_year = datetime.now().year
+        start_year_data = close[close.index.year == current_year]
+        ytd_start = safe_float(start_year_data.iloc[0]) if not start_year_data.empty else None
+
+        week_perf = ((latest - one_week) / one_week) * 100 if latest and one_week else None
+        month_perf = ((latest - one_month) / one_month) * 100 if latest and one_month else None
+        ytd_perf = ((latest - ytd_start) / ytd_start) * 100 if latest and ytd_start else None
+
+        return latest, week_perf, month_perf, ytd_perf
+
+    except Exception as e:
+        print(f"Fund performance failed for {ticker}: {e}")
+        return None
+
+
 def format_change_html(change):
+    if change is None:
+        return "N/A"
+
     if change > 0:
         return f'<span style="color:#0a8f3c; font-weight:bold;">▲ {change:.2f}%</span>'
     elif change < 0:
@@ -194,8 +249,7 @@ def generate_price_list(title, watchlist):
 
         if result:
             latest, change = result
-            change_html = format_change_html(change)
-            html += f"<li><b>{name}</b>: {latest:.2f} ({change_html})</li>"
+            html += f"<li><b>{name}</b>: {latest:.2f} ({format_change_html(change)})</li>"
         else:
             html += f"<li><b>{name}</b>: Data unavailable</li>"
 
@@ -209,12 +263,10 @@ def generate_executive_summary():
     <p><b>Generated:</b> {GENERATED_TIME}</p>
 
     <h2>🧭 Executive Summary</h2>
-
     <p>
     Today’s briefing covers CNBC and CNA news, global markets, Asia outlook,
     Magnificent 7, USD/SGD, interest rates, structured note ideas,
-    bond ideas, Fundsupermart top and bottom funds, unit trust sector updates
-    and FA client talking points.
+    bond ideas, unit trust performance and FA client talking points.
     </p>
 
     <p>
@@ -272,36 +324,12 @@ def generate_asia_outlook():
     <h3>📌 Asia Outlook Summary</h3>
 
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
-        <tr>
-            <th>Market</th>
-            <th>Current View</th>
-            <th>Key Drivers</th>
-        </tr>
-        <tr>
-            <td>Singapore</td>
-            <td>Neutral to Positive</td>
-            <td>Bank earnings, dividend support, REIT recovery, SGD stability</td>
-        </tr>
-        <tr>
-            <td>Hong Kong / China</td>
-            <td>Neutral to Recovery Watch</td>
-            <td>Policy support, tech sentiment, property stabilisation, investor confidence</td>
-        </tr>
-        <tr>
-            <td>Japan</td>
-            <td>Positive</td>
-            <td>Corporate reforms, shareholder returns, weaker Yen</td>
-        </tr>
-        <tr>
-            <td>India</td>
-            <td>Positive Long Term</td>
-            <td>Economic growth, demographics, infrastructure spending, domestic consumption</td>
-        </tr>
-        <tr>
-            <td>South Korea</td>
-            <td>Positive</td>
-            <td>Semiconductor cycle, AI demand, exports, technology recovery</td>
-        </tr>
+        <tr><th>Market</th><th>Current View</th><th>Key Drivers</th></tr>
+        <tr><td>Singapore</td><td>Neutral to Positive</td><td>Bank earnings, dividend support, REIT recovery, SGD stability</td></tr>
+        <tr><td>Hong Kong / China</td><td>Neutral to Recovery Watch</td><td>Policy support, tech sentiment, property stabilisation, investor confidence</td></tr>
+        <tr><td>Japan</td><td>Positive</td><td>Corporate reforms, shareholder returns, weaker Yen</td></tr>
+        <tr><td>India</td><td>Positive Long Term</td><td>Economic growth, demographics, infrastructure spending, domestic consumption</td></tr>
+        <tr><td>South Korea</td><td>Positive</td><td>Semiconductor cycle, AI demand, exports, technology recovery</td></tr>
     </table>
     """
 
@@ -329,8 +357,7 @@ def generate_fx_and_rates():
 
     if usd_sgd:
         latest, change = usd_sgd
-        change_html = format_change_html(change)
-        html += f"<p><b>USD/SGD:</b> {latest:.4f} ({change_html})</p>"
+        html += f"<p><b>USD/SGD:</b> {latest:.4f} ({format_change_html(change)})</p>"
     else:
         html += "<p><b>USD/SGD:</b> Data unavailable</p>"
 
@@ -362,8 +389,7 @@ def generate_structured_notes_watchlist():
 
             if result:
                 latest, change = result
-                change_html = format_change_html(change)
-                html += f"<li><b>{ticker}</b>: {latest:.2f} ({change_html})</li>"
+                html += f"<li><b>{ticker}</b>: {latest:.2f} ({format_change_html(change)})</li>"
             else:
                 html += f"<li><b>{ticker}</b>: Data unavailable</li>"
 
@@ -384,41 +410,11 @@ def generate_sn_ideas():
             <th>Indicative Coupon Range*</th>
             <th>Client Type</th>
         </tr>
-        <tr>
-            <td>Singapore Banks</td>
-            <td>DBS / OCBC / UOB</td>
-            <td>6-12 months</td>
-            <td>5% - 8%</td>
-            <td>Conservative income clients</td>
-        </tr>
-        <tr>
-            <td>US Banks</td>
-            <td>JPM / BAC / GS / MS</td>
-            <td>6-12 months</td>
-            <td>7% - 10%</td>
-            <td>Income clients</td>
-        </tr>
-        <tr>
-            <td>US Technology</td>
-            <td>Apple / Microsoft / Meta / Amazon</td>
-            <td>6-12 months</td>
-            <td>7% - 12%</td>
-            <td>Growth and income clients</td>
-        </tr>
-        <tr>
-            <td>Semiconductors / AI</td>
-            <td>Nvidia / AMD / Broadcom / TSMC</td>
-            <td>6-12 months</td>
-            <td>8% - 15%</td>
-            <td>Aggressive clients</td>
-        </tr>
-        <tr>
-            <td>China Technology</td>
-            <td>Alibaba / Tencent / JD / PDD</td>
-            <td>6-12 months</td>
-            <td>10% - 18%</td>
-            <td>Aggressive clients</td>
-        </tr>
+        <tr><td>Singapore Banks</td><td>DBS / OCBC / UOB</td><td>6-12 months</td><td>5% - 8%</td><td>Conservative income clients</td></tr>
+        <tr><td>US Banks</td><td>JPM / BAC / GS / MS</td><td>6-12 months</td><td>7% - 10%</td><td>Income clients</td></tr>
+        <tr><td>US Technology</td><td>Apple / Microsoft / Meta / Amazon</td><td>6-12 months</td><td>7% - 12%</td><td>Growth and income clients</td></tr>
+        <tr><td>Semiconductors / AI</td><td>Nvidia / AMD / Broadcom / TSMC</td><td>6-12 months</td><td>8% - 15%</td><td>Aggressive clients</td></tr>
+        <tr><td>China Technology</td><td>Alibaba / Tencent / JD / PDD</td><td>6-12 months</td><td>10% - 18%</td><td>Aggressive clients</td></tr>
     </table>
 
     <p style="font-size:12px;">
@@ -446,7 +442,6 @@ def generate_bond_market_watch():
 def generate_bond_ideas():
     return """
     <h2>💡 Bond Ideas</h2>
-
     <ul>
         <li><b>SGD Investment Grade Bonds:</b> Conservative SGD income clients.</li>
         <li><b>USD Investment Grade Bonds:</b> Clients comfortable with USD exposure.</li>
@@ -456,41 +451,6 @@ def generate_bond_ideas():
         <li><b>Long Duration Bonds:</b> Clients expecting future rate cuts.</li>
     </ul>
     """
-
-
-def get_fsm_best_worst_funds():
-    url = "https://secure.fundsupermart.com/fsm/tools/best-worst-performer-fund"
-
-    try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        tables = pd.read_html(response.text)
-
-        if not tables:
-            return None, None
-
-        top_table = tables[0].head(3)
-        bottom_table = tables[-1].head(3)
-
-        return top_table, bottom_table
-
-    except Exception as e:
-        print(f"FSM top/bottom fund pull failed: {e}")
-        return None, None
-
-
-def dataframe_to_html_table(df):
-    if df is None or df.empty:
-        return ""
-
-    return df.to_html(
-        index=False,
-        border=1,
-        escape=False,
-        justify="center"
-    )
 
 
 def generate_unit_trust_section():
@@ -514,17 +474,13 @@ def generate_unit_trust_section():
         if result:
             latest, week_perf, month_perf, ytd_perf = result
 
-            week_html = format_change_html(week_perf) if week_perf is not None else "N/A"
-            month_html = format_change_html(month_perf) if month_perf is not None else "N/A"
-            ytd_html = format_change_html(ytd_perf) if ytd_perf is not None else "N/A"
-
             html += f"""
             <tr>
                 <td><b>{fund_name}</b><br><span style="font-size:12px;color:gray;">{ticker}</span></td>
                 <td>{latest:.4f}</td>
-                <td>{week_html}</td>
-                <td>{month_html}</td>
-                <td>{ytd_html}</td>
+                <td>{format_change_html(week_perf)}</td>
+                <td>{format_change_html(month_perf)}</td>
+                <td>{format_change_html(ytd_perf)}</td>
                 <td>Review short-term momentum against long-term suitability, risk profile and client objective.</td>
             </tr>
             """
@@ -532,7 +488,7 @@ def generate_unit_trust_section():
             html += f"""
             <tr>
                 <td><b>{fund_name}</b><br><span style="font-size:12px;color:gray;">{ticker}</span></td>
-                <td colspan="5">Data unavailable from Yahoo Finance</td>
+                <td colspan="5">Data unavailable from Yahoo Finance. Verify directly from FSMOne/iFAST.</td>
             </tr>
             """
 
@@ -542,18 +498,11 @@ def generate_unit_trust_section():
     <p style="font-size:12px;color:gray;">
     Note: Fund data depends on Yahoo Finance ticker availability. Please verify final fund performance against FSMOne/iFAST factsheets before client recommendation.
     </p>
-    """
 
-    html += """
     <h3>🌍 Unit Trust Sector Updates</h3>
 
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
-        <tr>
-            <th>Sector / Theme</th>
-            <th>Current View</th>
-            <th>Client Type</th>
-            <th>FA Action</th>
-        </tr>
+        <tr><th>Sector / Theme</th><th>Current View</th><th>Client Type</th><th>FA Action</th></tr>
         <tr><td>Technology / AI</td><td>Positive but volatile</td><td>Aggressive growth clients</td><td>Use phased entry and avoid over-concentration.</td></tr>
         <tr><td>Healthcare</td><td>Neutral to Positive</td><td>Defensive growth clients</td><td>Useful as a defensive growth allocation.</td></tr>
         <tr><td>Financials</td><td>Neutral to Positive</td><td>Income / Balanced clients</td><td>Check bank earnings, rates and dividend sustainability.</td></tr>
@@ -659,4 +608,3 @@ if __name__ == "__main__":
         print("Error sending email:")
         print(e)
         traceback.print_exc()
-```
