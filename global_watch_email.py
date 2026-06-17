@@ -545,93 +545,142 @@ def generate_bond_ideas():
 
 def generate_unit_trust_section():
     return """
-    <h2>📈 Unit Trust Fund Outlook & Recommendations</h2>
+    <h2>🏆 iFAST Top Funds & Unit Trust Sector Updates</h2>
 
-    <h3>📌 Fund Outlook Summary</h3>
+    <h3>📌 iFAST Top Funds Weekly Watch</h3>
+
+    <p>
+    This section is designed to track iFAST's weekly top-performing and bottom-performing
+    unit trust themes. Please verify the actual fund names, returns, risk ratings and
+    factsheets directly from iFAST before making any client recommendation.
+    </p>
+
+    <h3>📈 Top 3 Fund Themes This Week</h3>
 
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
         <tr>
-            <th>Fund Category</th>
-            <th>Current Outlook</th>
-            <th>Suitable Client Type</th>
+            <th>Rank</th>
+            <th>Fund / Theme</th>
+            <th>Likely Driver</th>
             <th>FA Talking Point</th>
         </tr>
-
         <tr>
-            <td>Money Market Funds</td>
-            <td>Positive for liquidity parking</td>
-            <td>Conservative / cash-heavy clients</td>
-            <td>Useful for clients waiting to deploy cash gradually.</td>
+            <td>1</td>
+            <td>Top Performing Equity / Sector Fund</td>
+            <td>Momentum, earnings, sector rotation or policy support</td>
+            <td>Check whether performance is sustainable or short-term driven.</td>
         </tr>
-
         <tr>
-            <td>Short Duration Bond Funds</td>
-            <td>Positive</td>
-            <td>Conservative income clients</td>
-            <td>Lower duration risk compared to long bond funds.</td>
+            <td>2</td>
+            <td>Top Performing Country / Regional Fund</td>
+            <td>Country rebound, currency movement or valuation recovery</td>
+            <td>Assess whether this fits the client's risk profile and time horizon.</td>
         </tr>
-
         <tr>
-            <td>Investment Grade Bond Funds</td>
-            <td>Neutral to Positive</td>
-            <td>Income and stability clients</td>
-            <td>May benefit if rates peak or start falling.</td>
+            <td>3</td>
+            <td>Top Performing Bond / Income Fund</td>
+            <td>Rate movement, credit spread compression or income demand</td>
+            <td>Review duration, credit risk, currency and distribution sustainability.</td>
         </tr>
+    </table>
 
+    <h3>📉 Bottom 3 Fund Themes This Week</h3>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
         <tr>
-            <td>Global Equity Funds</td>
-            <td>Positive long term</td>
-            <td>Growth clients</td>
-            <td>Use phased entry due to valuation and volatility risk.</td>
+            <th>Rank</th>
+            <th>Fund / Theme</th>
+            <th>Likely Reason</th>
+            <th>FA Talking Point</th>
         </tr>
-
         <tr>
-            <td>US Technology / AI Funds</td>
+            <td>1</td>
+            <td>Weakest Performing Equity / Sector Fund</td>
+            <td>Profit-taking, weak earnings, policy risk or valuation pressure</td>
+            <td>Do not average down blindly; check whether fundamentals have changed.</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Weakest Performing Country / Regional Fund</td>
+            <td>Currency weakness, capital outflow or macro concerns</td>
+            <td>Use this as a review trigger for existing client holdings.</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Weakest Performing Bond / Income Fund</td>
+            <td>Rate volatility, credit concerns or duration impact</td>
+            <td>Check whether the weakness is mark-to-market or credit-related.</td>
+        </tr>
+    </table>
+
+    <h3>🌍 Unit Trust Sector Updates</h3>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+        <tr>
+            <th>Sector / Theme</th>
+            <th>Current View</th>
+            <th>Client Type</th>
+            <th>FA Action</th>
+        </tr>
+        <tr>
+            <td>Technology / AI</td>
             <td>Positive but volatile</td>
             <td>Aggressive growth clients</td>
-            <td>Strong AI theme but concentration risk is high.</td>
+            <td>Use phased entry and avoid over-concentration.</td>
         </tr>
-
         <tr>
-            <td>Healthcare Funds</td>
+            <td>Healthcare</td>
             <td>Neutral to Positive</td>
             <td>Defensive growth clients</td>
             <td>Useful as a defensive growth allocation.</td>
         </tr>
-
         <tr>
-            <td>Asia Income Funds</td>
+            <td>Financials</td>
             <td>Neutral to Positive</td>
+            <td>Income / Balanced clients</td>
+            <td>Check bank earnings, rates and dividend sustainability.</td>
+        </tr>
+        <tr>
+            <td>REITs / Property Income</td>
+            <td>Recovery Watch</td>
             <td>Income clients</td>
-            <td>Useful for regional diversification and income.</td>
+            <td>Could benefit if rates stabilise or decline.</td>
         </tr>
-
         <tr>
-            <td>India Equity Funds</td>
-            <td>Positive long term</td>
-            <td>Growth clients</td>
-            <td>Structural growth theme, but valuation risk must be explained.</td>
+            <td>Gold / Precious Metals</td>
+            <td>Neutral to Positive</td>
+            <td>Diversification clients</td>
+            <td>Useful as a hedge against geopolitical and currency risk.</td>
         </tr>
-
         <tr>
-            <td>Japan Equity Funds</td>
-            <td>Positive</td>
-            <td>Growth and balanced clients</td>
-            <td>Supported by corporate reforms and shareholder return focus.</td>
-        </tr>
-
-        <tr>
-            <td>China / Greater China Funds</td>
-            <td>Recovery watch</td>
-            <td>Aggressive / contrarian clients</td>
+            <td>China / Greater China</td>
+            <td>Recovery Watch</td>
+            <td>Aggressive / Contrarian clients</td>
             <td>Potential rebound, but policy and sentiment risk remain high.</td>
         </tr>
-
         <tr>
-            <td>Multi-Asset Income Funds</td>
-            <td>Neutral to Positive</td>
-            <td>Balanced income clients</td>
-            <td>Suitable for clients who want diversified income exposure.</td>
+            <td>India</td>
+            <td>Positive Long Term</td>
+            <td>Growth clients</td>
+            <td>Structural growth story, but valuation risk must be explained.</td>
+        </tr>
+        <tr>
+            <td>Japan</td>
+            <td>Positive</td>
+            <td>Growth / Balanced clients</td>
+            <td>Supported by corporate reforms and shareholder returns.</td>
+        </tr>
+        <tr>
+            <td>Investment Grade Bonds</td>
+            <td>Positive</td>
+            <td>Conservative / Income clients</td>
+            <td>Good for income and portfolio stability.</td>
+        </tr>
+        <tr>
+            <td>High Yield Bonds</td>
+            <td>Selective</td>
+            <td>Aggressive income clients</td>
+            <td>Higher yield, but credit risk must be explained clearly.</td>
         </tr>
     </table>
 
