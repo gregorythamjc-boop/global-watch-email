@@ -88,27 +88,44 @@ def get_price_change(ticker):
     try:
         print(f"Checking ticker: {ticker}")
 
-        stock = yf.Ticker(ticker)
-
-        data = stock.history(
+        data = yf.download(
+            ticker,
             period="5d",
-            auto_adjust=True
+            progress=False,
+            auto_adjust=True,
+            threads=False
         )
 
-        if data.empty or len(data) < 2:
+        if data.empty or "Close" not in data:
             print(f"{ticker}: EMPTY DATA")
             return None
 
-        latest = float(data["Close"].iloc[-1])
-        previous = float(data["Close"].iloc[-2])
+        close = data["Close"]
 
-        change = ((latest - previous) / previous) * 100
+        if hasattr(close, "iloc") and len(close) >= 2:
+            latest_value = close.iloc[-1]
+            previous_value = close.iloc[-2]
 
-        return latest, change
+            if hasattr(latest_value, "iloc"):
+                latest_value = latest_value.iloc[0]
+
+            if hasattr(previous_value, "iloc"):
+                previous_value = previous_value.iloc[0]
+
+            latest = float(latest_value)
+            previous = float(previous_value)
+
+            change = ((latest - previous) / previous) * 100
+
+            print(f"{ticker}: {latest:.2f}, {change:.2f}%")
+
+            return latest, change
+
+        print(f"{ticker}: NOT ENOUGH DATA")
+        return None
 
     except Exception as e:
-        print(f"ERROR: {ticker}")
-        print(e)
+        print(f"ERROR for {ticker}: {e}")
         return None
 
 
@@ -118,6 +135,23 @@ def direction_icon(change):
     elif change < 0:
         return "▼"
     return "–"
+
+
+def generate_price_list(title, watchlist):
+    html = f"<h2>{title}</h2><ul>"
+
+    for name, ticker in watchlist.items():
+        result = get_price_change(ticker)
+
+        if result:
+            latest, change = result
+            icon = direction_icon(change)
+            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
+        else:
+            html += f"<li><b>{name}</b>: Data unavailable</li>"
+
+    html += "</ul>"
+    return html
 
 
 def generate_executive_summary():
@@ -166,19 +200,7 @@ def generate_news_section():
 
 
 def generate_market_summary():
-    html = "<h2>🌍 Global Market Summary</h2><ul>"
-
-    for name, ticker in GLOBAL_MARKETS.items():
-        result = get_price_change(ticker)
-
-        if result:
-            latest, change = result
-            icon = direction_icon(change)
-            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
-        else:
-            html += f"<li><b>{name}</b>: Data unavailable</li>"
-
-    html += "</ul>"
+    html = generate_price_list("🌍 Global Market Summary", GLOBAL_MARKETS)
 
     html += """
     <p>
@@ -192,19 +214,7 @@ def generate_market_summary():
 
 
 def generate_asia_outlook():
-    html = "<h2>🌏 Asia Market Outlook</h2><ul>"
-
-    for name, ticker in ASIA_MARKETS.items():
-        result = get_price_change(ticker)
-
-        if result:
-            latest, change = result
-            icon = direction_icon(change)
-            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
-        else:
-            html += f"<li><b>{name}</b>: Data unavailable</li>"
-
-    html += "</ul>"
+    html = generate_price_list("🌏 Asia Market Outlook", ASIA_MARKETS)
 
     html += """
     <h3>📌 Asia Outlook Summary</h3>
@@ -231,7 +241,7 @@ def generate_asia_outlook():
         <tr>
             <td>Japan</td>
             <td>Positive</td>
-            <td>Corporate reforms, shareholder returns, inflation normalisation, weaker Yen</td>
+            <td>Corporate reforms, shareholder returns, weaker Yen</td>
         </tr>
 
         <tr>
@@ -252,11 +262,10 @@ def generate_asia_outlook():
     <ul>
         <li><b>Singapore Banks:</b> DBS, OCBC, UOB for income and dividend-focused clients.</li>
         <li><b>Singapore REITs:</b> Recovery theme if rates stabilise or fall.</li>
-        <li><b>Japan Equities:</b> Supported by corporate governance reform and shareholder returns.</li>
+        <li><b>Japan Equities:</b> Corporate reform and shareholder return theme.</li>
         <li><b>India Equities:</b> Long-term structural growth and consumption theme.</li>
         <li><b>Asia Investment Grade Bonds:</b> Suitable for income and diversification clients.</li>
         <li><b>China / Hong Kong Tech:</b> Recovery opportunity, but higher volatility.</li>
-        <li><b>Asia Dividend Funds:</b> Useful for income with regional diversification.</li>
     </ul>
 
     <h3>🌏 Asia Structured Note Ideas</h3>
@@ -296,30 +305,13 @@ def generate_asia_outlook():
             <td>Growth and income clients</td>
             <td>AI cycle, chip demand, geopolitical risk</td>
         </tr>
-
-        <tr>
-            <td>Japan Index</td>
-            <td>Nikkei 225 linked structures</td>
-            <td>Moderate to growth clients</td>
-            <td>Yen movement, valuation, export cycle</td>
-        </tr>
-
-        <tr>
-            <td>India Index</td>
-            <td>Nifty 50 linked structures</td>
-            <td>Long-term growth clients</td>
-            <td>Valuation, liquidity, currency risk</td>
-        </tr>
     </table>
 
-    <h3>🗣 FA Asia Talking Point</h3>
-
     <p>
-    Asia remains one of the most important long-term allocation regions.
-    Singapore offers income and dividend stability, Japan benefits from
-    corporate reforms, India remains a structural growth story, while China
-    and Hong Kong provide recovery potential for investors who can accept
-    higher volatility.
+    <b>FA Asia Talking Point:</b><br>
+    Asia remains important for long-term allocation. Singapore offers income,
+    Japan benefits from reforms, India remains a structural growth story,
+    while China and Hong Kong offer recovery potential with higher volatility.
     </p>
     """
 
@@ -327,29 +319,13 @@ def generate_asia_outlook():
 
 
 def generate_magnificent_7():
-    html = "<h2>🇺🇸 Magnificent 7 Watch</h2><ul>"
-
-    for name, ticker in MAGNIFICENT_7.items():
-        result = get_price_change(ticker)
-
-        if result:
-            latest, change = result
-            icon = direction_icon(change)
-            html += f"<li><b>{name}</b>: US${latest:.2f} ({icon} {change:.2f}%)</li>"
-        else:
-            html += f"<li><b>{name}</b>: Data unavailable</li>"
-
-    html += "</ul>"
-
-    html += """
+    return generate_price_list("🇺🇸 Magnificent 7 Watch", MAGNIFICENT_7) + """
     <p>
     <b>FA View:</b><br>
     The Magnificent 7 remains important for US equity sentiment, but concentration
     risk is high. Clients with heavy US technology exposure should review diversification.
     </p>
     """
-
-    return html
 
 
 def generate_fx_and_rates():
@@ -375,12 +351,6 @@ def generate_fx_and_rates():
     <b>SGD Interest Rate View:</b><br>
     Singapore rates are influenced by USD rates, liquidity and MAS exchange-rate policy.
     SGD money market and short-duration income products remain useful for liquidity clients.
-    </p>
-
-    <p>
-    <b>FX View Against SGD:</b><br>
-    A strong USD benefits USD asset holders but introduces currency risk for SGD-based clients.
-    SGD-based clients should review whether their portfolio income and liabilities are in the same currency.
     </p>
     """
 
@@ -460,14 +430,6 @@ def generate_sn_ideas():
             <td>10% - 18%</td>
             <td>Aggressive clients</td>
         </tr>
-
-        <tr>
-            <td>Singapore REITs</td>
-            <td>CapitaLand / Ascendas / Mapletree</td>
-            <td>6-12 months</td>
-            <td>6% - 9%</td>
-            <td>Income-focused clients</td>
-        </tr>
     </table>
 
     <p style="font-size:12px;">
@@ -487,19 +449,7 @@ def generate_sn_ideas():
 
 
 def generate_bond_market_watch():
-    html = "<h2>🏦 Bond Market Watch</h2><ul>"
-
-    for name, ticker in BOND_MARKET_WATCHLIST.items():
-        result = get_price_change(ticker)
-
-        if result:
-            latest, change = result
-            icon = direction_icon(change)
-            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
-        else:
-            html += f"<li><b>{name}</b>: Data unavailable</li>"
-
-    html += "</ul>"
+    html = generate_price_list("🏦 Bond Market Watch", BOND_MARKET_WATCHLIST)
 
     html += """
     <p>
@@ -517,56 +467,14 @@ def generate_bond_ideas():
     return """
     <h2>💡 Bond Ideas</h2>
 
-    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
-        <tr>
-            <th>Bond Theme</th>
-            <th>Potential Area</th>
-            <th>Risk Level</th>
-            <th>Suitable For</th>
-        </tr>
-
-        <tr>
-            <td>SGD Investment Grade Bonds</td>
-            <td>Local banks, quality corporates, statutory-board linked issuers</td>
-            <td>Low to Medium</td>
-            <td>Conservative SGD income clients</td>
-        </tr>
-
-        <tr>
-            <td>USD Investment Grade Bonds</td>
-            <td>Global banks, quality corporates, sovereign-linked issuers</td>
-            <td>Medium</td>
-            <td>Clients comfortable with USD exposure</td>
-        </tr>
-
-        <tr>
-            <td>Short Duration Bonds</td>
-            <td>1-3 year bond funds or short maturity bonds</td>
-            <td>Low to Medium</td>
-            <td>Cash-heavy clients</td>
-        </tr>
-
-        <tr>
-            <td>Asia Investment Grade Bonds</td>
-            <td>Asia IG bond funds</td>
-            <td>Medium</td>
-            <td>Income and diversification clients</td>
-        </tr>
-
-        <tr>
-            <td>High Yield Bonds</td>
-            <td>Global or Asia high yield bond funds</td>
-            <td>High</td>
-            <td>Aggressive income clients</td>
-        </tr>
-
-        <tr>
-            <td>Long Duration Bonds</td>
-            <td>Long maturity government or IG bonds</td>
-            <td>Medium to High</td>
-            <td>Clients expecting rate cuts</td>
-        </tr>
-    </table>
+    <ul>
+        <li><b>SGD Investment Grade Bonds:</b> Conservative SGD income clients.</li>
+        <li><b>USD Investment Grade Bonds:</b> Clients comfortable with USD exposure.</li>
+        <li><b>Short Duration Bonds:</b> Cash-heavy clients seeking lower volatility.</li>
+        <li><b>Asia Investment Grade Bonds:</b> Income and diversification clients.</li>
+        <li><b>High Yield Bonds:</b> Aggressive income clients only.</li>
+        <li><b>Long Duration Bonds:</b> Clients expecting future rate cuts.</li>
+    </ul>
     """
 
 
@@ -585,12 +493,6 @@ def generate_unit_trust_section():
         <li>India and Japan funds for Asia growth exposure</li>
         <li>Asia dividend funds for income clients</li>
     </ul>
-
-    <p>
-    <b>FA Note:</b><br>
-    Please verify actual fund performance, risk rating, platform availability,
-    expense ratio and client suitability before recommendation.
-    </p>
     """
 
 
@@ -669,15 +571,13 @@ def send_email():
 
 if __name__ == "__main__":
     try:
-        print("========== YFINANCE TEST ==========")
-        test_stock = yf.Ticker("AAPL")
-        print(test_stock.history(period="5d"))
-        print("========== TEST COMPLETE ==========")
-
+        print("========== STARTING GLOBAL WATCH ==========")
         send_email()
         print("Email sent successfully.")
+        print("========== GLOBAL WATCH COMPLETE ==========")
 
     except Exception as e:
         print("Error sending email:")
         print(e)
         traceback.print_exc()
+
