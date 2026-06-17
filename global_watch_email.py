@@ -121,7 +121,6 @@ def get_price_change_yfinance(ticker):
         previous = float(previous)
 
         change = ((latest - previous) / previous) * 100
-
         return latest, change
 
     except Exception as e:
@@ -132,24 +131,15 @@ def get_price_change_yfinance(ticker):
 def get_price_change_yahoo_api(ticker):
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
-
-        params = {
-            "range": "5d",
-            "interval": "1d",
-        }
-
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
+        params = {"range": "5d", "interval": "1d"}
+        headers = {"User-Agent": "Mozilla/5.0"}
 
         response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status()
 
         data = response.json()
-
         result = data["chart"]["result"][0]
         prices = result["indicators"]["quote"][0]["close"]
-
         prices = [p for p in prices if p is not None]
 
         if len(prices) < 2:
@@ -157,7 +147,6 @@ def get_price_change_yahoo_api(ticker):
 
         latest = float(prices[-1])
         previous = float(prices[-2])
-
         change = ((latest - previous) / previous) * 100
 
         return latest, change
@@ -188,12 +177,13 @@ def get_price_change(ticker):
     return None
 
 
-def direction_icon(change):
+def format_change_html(change):
     if change > 0:
-        return "▲"
+        return f'<span style="color:#0a8f3c; font-weight:bold;">▲ {change:.2f}%</span>'
     elif change < 0:
-        return "▼"
-    return "–"
+        return f'<span style="color:#c62828; font-weight:bold;">▼ {change:.2f}%</span>'
+    else:
+        return f'<span style="color:#666666; font-weight:bold;">– {change:.2f}%</span>'
 
 
 def generate_price_list(title, watchlist):
@@ -204,8 +194,8 @@ def generate_price_list(title, watchlist):
 
         if result:
             latest, change = result
-            icon = direction_icon(change)
-            html += f"<li><b>{name}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
+            change_html = format_change_html(change)
+            html += f"<li><b>{name}</b>: {latest:.2f} ({change_html})</li>"
         else:
             html += f"<li><b>{name}</b>: Data unavailable</li>"
 
@@ -216,7 +206,6 @@ def generate_price_list(title, watchlist):
 def generate_executive_summary():
     return f"""
     <h1>Global Watch - {TODAY}</h1>
-
     <p><b>Generated:</b> {GENERATED_TIME}</p>
 
     <h2>🧭 Executive Summary</h2>
@@ -314,52 +303,6 @@ def generate_asia_outlook():
             <td>Semiconductor cycle, AI demand, exports, technology recovery</td>
         </tr>
     </table>
-
-    <h3>💡 Asia Investment Ideas</h3>
-
-    <ul>
-        <li><b>Singapore Banks:</b> DBS, OCBC, UOB for income and dividend-focused clients.</li>
-        <li><b>Singapore REITs:</b> Recovery theme if rates stabilise or fall.</li>
-        <li><b>Japan Equities:</b> Corporate reform and shareholder return theme.</li>
-        <li><b>India Equities:</b> Long-term structural growth and consumption theme.</li>
-        <li><b>Asia Investment Grade Bonds:</b> Suitable for income and diversification clients.</li>
-        <li><b>China / Hong Kong Tech:</b> Recovery opportunity, but higher volatility.</li>
-    </ul>
-
-    <h3>🌏 Asia Structured Note Ideas</h3>
-
-    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
-        <tr>
-            <th>Theme</th>
-            <th>Potential Underlyings</th>
-            <th>Client Type</th>
-            <th>Key Risk</th>
-        </tr>
-        <tr>
-            <td>Singapore Banks</td>
-            <td>DBS / OCBC / UOB</td>
-            <td>Conservative income clients</td>
-            <td>Bank earnings, rate cycle, market volatility</td>
-        </tr>
-        <tr>
-            <td>Singapore REITs</td>
-            <td>CapitaLand Integrated / Ascendas / Mapletree Logistics</td>
-            <td>Income clients</td>
-            <td>Interest rates, refinancing cost, property cycle</td>
-        </tr>
-        <tr>
-            <td>China Tech</td>
-            <td>Alibaba / Tencent / JD / Meituan</td>
-            <td>Aggressive clients</td>
-            <td>Policy risk, earnings risk, volatility</td>
-        </tr>
-        <tr>
-            <td>Asia Semiconductors</td>
-            <td>TSMC / Samsung / SK Hynix</td>
-            <td>Growth and income clients</td>
-            <td>AI cycle, chip demand, geopolitical risk</td>
-        </tr>
-    </table>
     """
 
     return html
@@ -386,8 +329,8 @@ def generate_fx_and_rates():
 
     if usd_sgd:
         latest, change = usd_sgd
-        icon = direction_icon(change)
-        html += f"<p><b>USD/SGD:</b> {latest:.4f} ({icon} {change:.2f}%)</p>"
+        change_html = format_change_html(change)
+        html += f"<p><b>USD/SGD:</b> {latest:.4f} ({change_html})</p>"
     else:
         html += "<p><b>USD/SGD:</b> Data unavailable</p>"
 
@@ -419,8 +362,8 @@ def generate_structured_notes_watchlist():
 
             if result:
                 latest, change = result
-                icon = direction_icon(change)
-                html += f"<li><b>{ticker}</b>: {latest:.2f} ({icon} {change:.2f}%)</li>"
+                change_html = format_change_html(change)
+                html += f"<li><b>{ticker}</b>: {latest:.2f} ({change_html})</li>"
             else:
                 html += f"<li><b>{ticker}</b>: Data unavailable</li>"
 
@@ -519,10 +462,7 @@ def get_fsm_best_worst_funds():
     url = "https://secure.fundsupermart.com/fsm/tools/best-worst-performer-fund"
 
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
-
+        headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
 
@@ -554,93 +494,55 @@ def dataframe_to_html_table(df):
 
 
 def generate_unit_trust_section():
-    top_funds, bottom_funds = get_fsm_best_worst_funds()
-
     html = """
-    <h2>🏆 Fundsupermart / iFAST Top & Bottom Funds</h2>
+    <h2>🏆 Unit Trust Watchlist Performance</h2>
 
-    <p>
-    This section attempts to pull the latest top and bottom performing funds
-    from Fundsupermart / FSMOne. If the website blocks automated access,
-    please verify directly from the Fundsupermart Best / Worst Performer Fund tool.
-    </p>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+        <tr>
+            <th>Fund Name</th>
+            <th>Latest Price</th>
+            <th>1 Week</th>
+            <th>1 Month</th>
+            <th>YTD</th>
+            <th>FA Talking Point</th>
+        </tr>
     """
 
-    if top_funds is not None and bottom_funds is not None:
-        html += "<h3>📈 Top 3 Performing Funds</h3>"
-        html += dataframe_to_html_table(top_funds)
+    for fund_name, ticker in UNIT_TRUST_WATCHLIST.items():
+        result = get_fund_performance(ticker)
 
-        html += "<h3>📉 Bottom 3 Performing Funds</h3>"
-        html += dataframe_to_html_table(bottom_funds)
+        if result:
+            latest, week_perf, month_perf, ytd_perf = result
 
-    else:
-        html += """
-        <h3>📈 Top 3 Performing Funds</h3>
+            week_html = format_change_html(week_perf) if week_perf is not None else "N/A"
+            month_html = format_change_html(month_perf) if month_perf is not None else "N/A"
+            ytd_html = format_change_html(ytd_perf) if ytd_perf is not None else "N/A"
 
-        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+            html += f"""
             <tr>
-                <th>Rank</th>
-                <th>Fund Name</th>
-                <th>Category / Sector</th>
-                <th>Performance</th>
-                <th>FA Talking Point</th>
+                <td><b>{fund_name}</b><br><span style="font-size:12px;color:gray;">{ticker}</span></td>
+                <td>{latest:.4f}</td>
+                <td>{week_html}</td>
+                <td>{month_html}</td>
+                <td>{ytd_html}</td>
+                <td>Review short-term momentum against long-term suitability, risk profile and client objective.</td>
             </tr>
+            """
+        else:
+            html += f"""
             <tr>
-                <td>1</td>
-                <td>Check latest Fundsupermart Top Performer</td>
-                <td>Verify from FSMOne</td>
-                <td>Verify from FSMOne</td>
-                <td>Check whether performance is sustainable or short-term driven.</td>
+                <td><b>{fund_name}</b><br><span style="font-size:12px;color:gray;">{ticker}</span></td>
+                <td colspan="5">Data unavailable from Yahoo Finance</td>
             </tr>
-            <tr>
-                <td>2</td>
-                <td>Check latest Fundsupermart Top Performer</td>
-                <td>Verify from FSMOne</td>
-                <td>Verify from FSMOne</td>
-                <td>Assess risk profile, currency and sector concentration.</td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td>Check latest Fundsupermart Top Performer</td>
-                <td>Verify from FSMOne</td>
-                <td>Verify from FSMOne</td>
-                <td>Review whether it fits client time horizon.</td>
-            </tr>
-        </table>
+            """
 
-        <h3>📉 Bottom 3 Performing Funds</h3>
+    html += """
+    </table>
 
-        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
-            <tr>
-                <th>Rank</th>
-                <th>Fund Name</th>
-                <th>Category / Sector</th>
-                <th>Performance</th>
-                <th>FA Talking Point</th>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>Check latest Fundsupermart Worst Performer</td>
-                <td>Verify from FSMOne</td>
-                <td>Verify from FSMOne</td>
-                <td>Do not average down blindly; check fundamentals.</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>Check latest Fundsupermart Worst Performer</td>
-                <td>Verify from FSMOne</td>
-                <td>Verify from FSMOne</td>
-                <td>Use this as a portfolio review trigger.</td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td>Check latest Fundsupermart Worst Performer</td>
-                <td>Verify from FSMOne</td>
-                <td>Verify from FSMOne</td>
-                <td>Check if weakness is temporary or structural.</td>
-            </tr>
-        </table>
-        """
+    <p style="font-size:12px;color:gray;">
+    Note: Fund data depends on Yahoo Finance ticker availability. Please verify final fund performance against FSMOne/iFAST factsheets before client recommendation.
+    </p>
+    """
 
     html += """
     <h3>🌍 Unit Trust Sector Updates</h3>
@@ -663,22 +565,6 @@ def generate_unit_trust_section():
         <tr><td>Investment Grade Bonds</td><td>Positive</td><td>Conservative / Income clients</td><td>Good for income and portfolio stability.</td></tr>
         <tr><td>High Yield Bonds</td><td>Selective</td><td>Aggressive income clients</td><td>Higher yield, but credit risk must be explained clearly.</td></tr>
     </table>
-
-    <h3>🗣 FA Unit Trust Talking Points</h3>
-
-    <ul>
-        <li>Do not recommend a fund only because it is a weekly top performer.</li>
-        <li>Check 1-week, 1-month, 3-month, YTD, 1-year and 3-year performance.</li>
-        <li>Review fund size, currency, risk rating, fees and distribution policy.</li>
-        <li>Separate short-term momentum from long-term investment quality.</li>
-        <li>Use top and bottom performers as client portfolio review triggers.</li>
-    </ul>
-
-    <p style="font-size:12px;">
-    Note: Actual fund selection should be verified against the latest Fundsupermart / FSMOne data,
-    fund factsheet, platform availability, risk rating, fees, fund size, distribution policy
-    and client suitability.
-    </p>
     """
 
     return html
@@ -773,3 +659,4 @@ if __name__ == "__main__":
         print("Error sending email:")
         print(e)
         traceback.print_exc()
+```
