@@ -3,6 +3,7 @@
 import os
 import smtplib
 import traceback
+import requests
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -25,6 +26,9 @@ GENERATED_TIME = datetime.now().strftime("%d %b %Y, %I:%M %p")
 NEWS_FEEDS = {
     "CNBC World": "https://www.cnbc.com/id/100727362/device/rss/rss.html",
     "CNBC Markets": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "CNBC Investing": "https://www.cnbc.com/id/15839069/device/rss/rss.html",
+    "CNBC Asia": "https://www.cnbc.com/id/19832390/device/rss/rss.html",
+    "CNBC Economy": "https://www.cnbc.com/id/20910258/device/rss/rss.html",
     "CNA Singapore": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml",
 }
 
@@ -46,7 +50,7 @@ GLOBAL_MARKETS = {
 ASIA_MARKETS = {
     "Singapore STI": "^STI",
     "Hong Kong HSI": "^HSI",
-    "China Shanghai Composite": "000001.SS",
+    "Shanghai Composite": "000001.SS",
     "Japan Nikkei 225": "^N225",
     "South Korea KOSPI": "^KS11",
     "India Nifty 50": "^NSEI",
@@ -84,49 +88,103 @@ BOND_MARKET_WATCHLIST = {
 }
 
 
-def get_price_change(ticker):
+def get_price_change_yfinance(ticker):
     try:
-        print(f"Checking ticker: {ticker}")
-
         data = yf.download(
             ticker,
             period="5d",
+            interval="1d",
             progress=False,
             auto_adjust=True,
             threads=False
         )
 
         if data.empty or "Close" not in data:
-            print(f"{ticker}: EMPTY DATA")
             return None
 
-        close = data["Close"]
+        close = data["Close"].dropna()
 
-        if hasattr(close, "iloc") and len(close) >= 2:
-            latest_value = close.iloc[-1]
-            previous_value = close.iloc[-2]
+        if len(close) < 2:
+            return None
 
-            if hasattr(latest_value, "iloc"):
-                latest_value = latest_value.iloc[0]
+        latest = close.iloc[-1]
+        previous = close.iloc[-2]
 
-            if hasattr(previous_value, "iloc"):
-                previous_value = previous_value.iloc[0]
+        if hasattr(latest, "iloc"):
+            latest = latest.iloc[0]
 
-            latest = float(latest_value)
-            previous = float(previous_value)
+        if hasattr(previous, "iloc"):
+            previous = previous.iloc[0]
 
-            change = ((latest - previous) / previous) * 100
+        latest = float(latest)
+        previous = float(previous)
 
-            print(f"{ticker}: {latest:.2f}, {change:.2f}%")
+        change = ((latest - previous) / previous) * 100
 
-            return latest, change
-
-        print(f"{ticker}: NOT ENOUGH DATA")
-        return None
+        return latest, change
 
     except Exception as e:
-        print(f"ERROR for {ticker}: {e}")
+        print(f"yfinance failed for {ticker}: {e}")
         return None
+
+
+def get_price_change_yahoo_api(ticker):
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+
+        params = {
+            "range": "5d",
+            "interval": "1d",
+        }
+
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        response = requests.get(url, params=params, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+
+        result = data["chart"]["result"][0]
+        prices = result["indicators"]["quote"][0]["close"]
+
+        prices = [p for p in prices if p is not None]
+
+        if len(prices) < 2:
+            return None
+
+        latest = float(prices[-1])
+        previous = float(prices[-2])
+
+        change = ((latest - previous) / previous) * 100
+
+        return latest, change
+
+    except Exception as e:
+        print(f"Yahoo API failed for {ticker}: {e}")
+        return None
+
+
+def get_price_change(ticker):
+    print(f"Checking ticker: {ticker}")
+
+    result = get_price_change_yfinance(ticker)
+
+    if result:
+        latest, change = result
+        print(f"{ticker} from yfinance: {latest:.2f}, {change:.2f}%")
+        return result
+
+    result = get_price_change_yahoo_api(ticker)
+
+    if result:
+        latest, change = result
+        print(f"{ticker} from Yahoo API: {latest:.2f}, {change:.2f}%")
+        return result
+
+    print(f"{ticker}: Data unavailable from both sources")
+    return None
 
 
 def direction_icon(change):
@@ -163,9 +221,9 @@ def generate_executive_summary():
     <h2>🧭 Executive Summary</h2>
 
     <p>
-    Today’s briefing covers global news, global markets, Asia outlook,
+    Today’s briefing covers CNBC and CNA news, global markets, Asia outlook,
     Magnificent 7, USD/SGD, interest rates, structured note ideas,
-    bond ideas, unit trust themes and FA client talking points.
+    bond ideas, unit trust fund outlook and FA client talking points.
     </p>
 
     <p>
@@ -186,13 +244,16 @@ def generate_news_section():
         try:
             feed = feedparser.parse(url)
 
+            if not feed.entries:
+                html += f"<li>No headlines available from {source}</li>"
+
             for entry in feed.entries[:5]:
                 title = entry.get("title", "No title")
                 link = entry.get("link", "#")
                 html += f'<li><a href="{link}">{title}</a></li>'
 
-        except Exception:
-            html += f"<li>Unable to pull news from {source}</li>"
+        except Exception as e:
+            html += f"<li>Unable to pull news from {source}: {e}</li>"
 
         html += "</ul>"
 
@@ -319,13 +380,17 @@ def generate_asia_outlook():
 
 
 def generate_magnificent_7():
-    return generate_price_list("🇺🇸 Magnificent 7 Watch", MAGNIFICENT_7) + """
+    html = generate_price_list("🇺🇸 Magnificent 7 Watch", MAGNIFICENT_7)
+
+    html += """
     <p>
     <b>FA View:</b><br>
     The Magnificent 7 remains important for US equity sentiment, but concentration
     risk is high. Clients with heavy US technology exposure should review diversification.
     </p>
     """
+
+    return html
 
 
 def generate_fx_and_rates():
@@ -480,19 +545,122 @@ def generate_bond_ideas():
 
 def generate_unit_trust_section():
     return """
-    <h2>📈 Unit Trust Ideas</h2>
+    <h2>📈 Unit Trust Fund Outlook & Recommendations</h2>
+
+    <h3>📌 Fund Outlook Summary</h3>
+
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+        <tr>
+            <th>Fund Category</th>
+            <th>Current Outlook</th>
+            <th>Suitable Client Type</th>
+            <th>FA Talking Point</th>
+        </tr>
+
+        <tr>
+            <td>Money Market Funds</td>
+            <td>Positive for liquidity parking</td>
+            <td>Conservative / cash-heavy clients</td>
+            <td>Useful for clients waiting to deploy cash gradually.</td>
+        </tr>
+
+        <tr>
+            <td>Short Duration Bond Funds</td>
+            <td>Positive</td>
+            <td>Conservative income clients</td>
+            <td>Lower duration risk compared to long bond funds.</td>
+        </tr>
+
+        <tr>
+            <td>Investment Grade Bond Funds</td>
+            <td>Neutral to Positive</td>
+            <td>Income and stability clients</td>
+            <td>May benefit if rates peak or start falling.</td>
+        </tr>
+
+        <tr>
+            <td>Global Equity Funds</td>
+            <td>Positive long term</td>
+            <td>Growth clients</td>
+            <td>Use phased entry due to valuation and volatility risk.</td>
+        </tr>
+
+        <tr>
+            <td>US Technology / AI Funds</td>
+            <td>Positive but volatile</td>
+            <td>Aggressive growth clients</td>
+            <td>Strong AI theme but concentration risk is high.</td>
+        </tr>
+
+        <tr>
+            <td>Healthcare Funds</td>
+            <td>Neutral to Positive</td>
+            <td>Defensive growth clients</td>
+            <td>Useful as a defensive growth allocation.</td>
+        </tr>
+
+        <tr>
+            <td>Asia Income Funds</td>
+            <td>Neutral to Positive</td>
+            <td>Income clients</td>
+            <td>Useful for regional diversification and income.</td>
+        </tr>
+
+        <tr>
+            <td>India Equity Funds</td>
+            <td>Positive long term</td>
+            <td>Growth clients</td>
+            <td>Structural growth theme, but valuation risk must be explained.</td>
+        </tr>
+
+        <tr>
+            <td>Japan Equity Funds</td>
+            <td>Positive</td>
+            <td>Growth and balanced clients</td>
+            <td>Supported by corporate reforms and shareholder return focus.</td>
+        </tr>
+
+        <tr>
+            <td>China / Greater China Funds</td>
+            <td>Recovery watch</td>
+            <td>Aggressive / contrarian clients</td>
+            <td>Potential rebound, but policy and sentiment risk remain high.</td>
+        </tr>
+
+        <tr>
+            <td>Multi-Asset Income Funds</td>
+            <td>Neutral to Positive</td>
+            <td>Balanced income clients</td>
+            <td>Suitable for clients who want diversified income exposure.</td>
+        </tr>
+    </table>
+
+    <h3>💡 Suggested Unit Trust Positioning</h3>
 
     <ul>
-        <li>Global equity funds for long-term growth</li>
-        <li>Asia income funds for regional diversification</li>
-        <li>Investment grade bond funds for income and stability</li>
-        <li>Money market funds for liquidity parking</li>
-        <li>Technology funds for higher-risk growth allocation</li>
-        <li>Healthcare funds for defensive growth exposure</li>
-        <li>Multi-asset income funds for balanced clients</li>
-        <li>India and Japan funds for Asia growth exposure</li>
-        <li>Asia dividend funds for income clients</li>
+        <li><b>Conservative clients:</b> Money market funds, short-duration bond funds, SGD income funds.</li>
+        <li><b>Income clients:</b> Investment grade bond funds, Asia income funds, multi-asset income funds.</li>
+        <li><b>Balanced clients:</b> Global balanced funds, multi-asset funds, dividend income funds.</li>
+        <li><b>Growth clients:</b> Global equity funds, US equity funds, Japan equity funds, India funds.</li>
+        <li><b>Aggressive clients:</b> Technology, AI, healthcare, China recovery and thematic funds.</li>
     </ul>
+
+    <h3>🗣 FA Unit Trust Talking Points</h3>
+
+    <ul>
+        <li>Do not leave excess cash idle if the client has medium- to long-term goals.</li>
+        <li>Use phased entry for volatile equity funds.</li>
+        <li>Match fund choice to client time horizon, risk profile and liquidity needs.</li>
+        <li>For income clients, focus on sustainability of payout, not just headline distribution yield.</li>
+        <li>For bond funds, explain duration risk, credit risk and currency risk.</li>
+        <li>For thematic funds, explain concentration risk and volatility.</li>
+    </ul>
+
+    <p style="font-size:12px;">
+    Note: Actual fund selection should be verified against the latest fund factsheet,
+    platform availability, risk rating, historical performance, fees, fund size,
+    distribution policy and client suitability.
+    </p>
     """
 
 
@@ -572,7 +740,12 @@ def send_email():
 if __name__ == "__main__":
     try:
         print("========== STARTING GLOBAL WATCH ==========")
+
+        test_result = get_price_change("AAPL")
+        print(f"AAPL test result: {test_result}")
+
         send_email()
+
         print("Email sent successfully.")
         print("========== GLOBAL WATCH COMPLETE ==========")
 
@@ -580,4 +753,3 @@ if __name__ == "__main__":
         print("Error sending email:")
         print(e)
         traceback.print_exc()
-
