@@ -12,10 +12,6 @@ import yfinance as yf
 from dotenv import load_dotenv
 
 
-# =========================
-# ENVIRONMENT SETTINGS
-# =========================
-
 load_dotenv()
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")
@@ -26,20 +22,12 @@ TODAY = datetime.now().strftime("%d %b %Y")
 GENERATED_TIME = datetime.now().strftime("%d %b %Y, %I:%M %p")
 
 
-# =========================
-# NEWS FEEDS
-# =========================
-
 NEWS_FEEDS = {
     "CNBC World": "https://www.cnbc.com/id/100727362/device/rss/rss.html",
     "CNBC Markets": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
     "CNA Singapore": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml",
 }
 
-
-# =========================
-# WATCHLISTS
-# =========================
 
 GLOBAL_MARKETS = {
     "S&P 500": "^GSPC",
@@ -54,6 +42,7 @@ GLOBAL_MARKETS = {
     "USD/SGD": "SGD=X",
 }
 
+
 ASIA_MARKETS = {
     "Singapore STI": "^STI",
     "Hong Kong HSI": "^HSI",
@@ -62,6 +51,7 @@ ASIA_MARKETS = {
     "South Korea KOSPI": "^KS11",
     "India Nifty 50": "^NSEI",
 }
+
 
 MAGNIFICENT_7 = {
     "Apple": "AAPL",
@@ -73,6 +63,7 @@ MAGNIFICENT_7 = {
     "Tesla": "TSLA",
 }
 
+
 STRUCTURED_NOTE_WATCHLIST = {
     "US Tech": ["AAPL", "MSFT", "NVDA", "META", "AMZN", "GOOGL", "TSLA"],
     "US Banks": ["JPM", "BAC", "C", "GS", "MS"],
@@ -82,9 +73,10 @@ STRUCTURED_NOTE_WATCHLIST = {
     "Singapore REITs": ["C38U.SI", "A17U.SI", "M44U.SI"],
 }
 
+
 BOND_MARKET_WATCHLIST = {
     "US 10Y Treasury Yield": "^TNX",
-    "US 2Y Treasury Yield": "^IRX",
+    "US 13 Week Treasury Yield": "^IRX",
     "Investment Grade Bond ETF": "LQD",
     "High Yield Bond ETF": "HYG",
     "Long Treasury Bond ETF": "TLT",
@@ -92,29 +84,31 @@ BOND_MARKET_WATCHLIST = {
 }
 
 
-# =========================
-# HELPER FUNCTIONS
-# =========================
-
 def get_price_change(ticker):
     try:
-        data = yf.download(
-            ticker,
+        print(f"Checking ticker: {ticker}")
+
+        stock = yf.Ticker(ticker)
+
+        data = stock.history(
             period="5d",
-            progress=False,
             auto_adjust=True
         )
 
         if data.empty or len(data) < 2:
+            print(f"{ticker}: EMPTY DATA")
             return None
 
         latest = float(data["Close"].iloc[-1])
         previous = float(data["Close"].iloc[-2])
+
         change = ((latest - previous) / previous) * 100
 
         return latest, change
 
-    except Exception:
+    except Exception as e:
+        print(f"ERROR: {ticker}")
+        print(e)
         return None
 
 
@@ -125,10 +119,6 @@ def direction_icon(change):
         return "▼"
     return "–"
 
-
-# =========================
-# EMAIL SECTIONS
-# =========================
 
 def generate_executive_summary():
     return f"""
@@ -229,19 +219,13 @@ def generate_asia_outlook():
         <tr>
             <td>Singapore</td>
             <td>Neutral to Positive</td>
-            <td>Bank earnings, dividend yield support, REIT recovery, SGD stability</td>
+            <td>Bank earnings, dividend support, REIT recovery, SGD stability</td>
         </tr>
 
         <tr>
-            <td>Hong Kong</td>
-            <td>Neutral</td>
-            <td>China policy support, tech sentiment, fund flows</td>
-        </tr>
-
-        <tr>
-            <td>China</td>
+            <td>Hong Kong / China</td>
             <td>Neutral to Recovery Watch</td>
-            <td>Stimulus, property stabilisation, consumption recovery, investor confidence</td>
+            <td>Policy support, tech sentiment, property stabilisation, investor confidence</td>
         </tr>
 
         <tr>
@@ -272,7 +256,7 @@ def generate_asia_outlook():
         <li><b>India Equities:</b> Long-term structural growth and consumption theme.</li>
         <li><b>Asia Investment Grade Bonds:</b> Suitable for income and diversification clients.</li>
         <li><b>China / Hong Kong Tech:</b> Recovery opportunity, but higher volatility.</li>
-        <li><b>Asia Dividend Funds:</b> Useful for clients seeking income with regional diversification.</li>
+        <li><b>Asia Dividend Funds:</b> Useful for income with regional diversification.</li>
     </ul>
 
     <h3>🌏 Asia Structured Note Ideas</h3>
@@ -583,15 +567,6 @@ def generate_bond_ideas():
             <td>Clients expecting rate cuts</td>
         </tr>
     </table>
-
-    <p>
-    <b>Bond Suitability Checklist:</b><br>
-    • Is the client investing for income, liquidity or capital gain?<br>
-    • Is the bond SGD or USD denominated?<br>
-    • What is the credit quality?<br>
-    • What is the duration and interest-rate sensitivity?<br>
-    • Does the client understand bonds can fall in value before maturity?
-    </p>
     """
 
 
@@ -634,10 +609,6 @@ def generate_fa_talking_points():
     """
 
 
-# =========================
-# BUILD EMAIL
-# =========================
-
 def build_email_body():
     html = """
     <html>
@@ -675,14 +646,10 @@ def build_email_body():
     return html
 
 
-# =========================
-# SEND EMAIL
-# =========================
-
 def send_email():
     if not EMAIL_FROM or not EMAIL_PASSWORD or not EMAIL_TO:
         raise ValueError(
-            "Missing email settings. Please check EMAIL_FROM, EMAIL_PASSWORD and EMAIL_TO in your .env file."
+            "Missing email settings. Please check EMAIL_FROM, EMAIL_PASSWORD and EMAIL_TO in GitHub Secrets."
         )
 
     subject = f"Global Watch - {TODAY}"
@@ -700,12 +667,13 @@ def send_email():
         server.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
 
 
-# =========================
-# MAIN
-# =========================
-
 if __name__ == "__main__":
     try:
+        print("========== YFINANCE TEST ==========")
+        test_stock = yf.Ticker("AAPL")
+        print(test_stock.history(period="5d"))
+        print("========== TEST COMPLETE ==========")
+
         send_email()
         print("Email sent successfully.")
 
