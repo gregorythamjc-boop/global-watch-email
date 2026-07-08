@@ -22,6 +22,7 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_TO = EMAIL_FROM  # main visible recipient, usually yourself
 
 EMAIL_BCC = [
+    "gregory.thamjc@gmail.com",
     "judysjsim@gmail.com",
     "Zoeytan01@gmail.com",
     "jeremy.ong.ss@manulifefa.com.sg",
