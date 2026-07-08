@@ -18,11 +18,22 @@ load_dotenv()
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-EMAIL_TO = os.getenv("EMAIL_TO")
+
+EMAIL_TO = EMAIL_FROM  # main visible recipient, usually yourself
+
+EMAIL_BCC = [
+    "judysjsim@gmail.com",
+    "Zoeytan01@gmail.com",
+    "jeremy.ong.ss@manulifefa.com.sg",
+    "sylvia.chua@manulifefa.com.sg",
+    "nicholes.lee@manulifefa.com.sg",
+    "cecilia.ss.lee@manulifefa.com.sg",
+    "juihan.ching@manulifefa.com.sg",
+    "alvin.tham@manulifefa.com.sg",
+]
 
 TODAY = datetime.now().strftime("%d %b %Y")
 GENERATED_TIME = datetime.now().strftime("%d %b %Y, %I:%M %p")
-
 
 NEWS_FEEDS = {
     "CNBC World": "https://www.cnbc.com/id/100727362/device/rss/rss.html",
@@ -572,9 +583,9 @@ def build_email_body():
 
 
 def send_email():
-    if not EMAIL_FROM or not EMAIL_PASSWORD or not EMAIL_TO:
+    if not EMAIL_FROM or not EMAIL_PASSWORD:
         raise ValueError(
-            "Missing email settings. Please check EMAIL_FROM, EMAIL_PASSWORD and EMAIL_TO in GitHub Secrets."
+            "Missing email settings. Please check EMAIL_FROM and EMAIL_PASSWORD in GitHub Secrets."
         )
 
     subject = f"Global Watch - {TODAY}"
@@ -587,10 +598,15 @@ def send_email():
     html_body = build_email_body()
     msg.attach(MIMEText(html_body, "html"))
 
+    recipients = [EMAIL_TO] + EMAIL_BCC
+
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(EMAIL_FROM, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
-
+        server.sendmail(
+            EMAIL_FROM,
+            recipients,
+            msg.as_string()
+        )
 
 if __name__ == "__main__":
     try:
