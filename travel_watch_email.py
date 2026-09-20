@@ -61,6 +61,7 @@ SERPAPI_URL = "https://serpapi.com/search.json"
 # ============================================================
 
 FLIGHT_SEARCHES = [
+    # Japan
     {
         "key": "SIN_TYO_0212",
         "from": "SIN",
@@ -69,6 +70,16 @@ FLIGHT_SEARCHES = [
         "to_name": "Tokyo",
         "date": "2026-12-02",
     },
+    {
+        "key": "TYO_SIN_1212",
+        "from": "NRT,HND",
+        "to": "SIN",
+        "from_name": "Tokyo",
+        "to_name": "Singapore",
+        "date": "2026-12-12",
+    },
+
+    # Japan + Taipei
     {
         "key": "TYO_TPE_1212",
         "from": "NRT,HND",
@@ -85,6 +96,8 @@ FLIGHT_SEARCHES = [
         "to_name": "Singapore",
         "date": "2026-12-18",
     },
+
+    # Japan + Guangzhou
     {
         "key": "TYO_CAN_1212",
         "from": "NRT,HND",
@@ -101,6 +114,8 @@ FLIGHT_SEARCHES = [
         "to_name": "Singapore",
         "date": "2026-12-18",
     },
+
+    # Bangkok standalone
     {
         "key": "SIN_BKK_0212",
         "from": "SIN",
@@ -117,6 +132,26 @@ FLIGHT_SEARCHES = [
         "to_name": "Singapore",
         "date": "2026-12-06",
     },
+
+    # Chiang Mai standalone
+    {
+        "key": "SIN_CNX_0212",
+        "from": "SIN",
+        "to": "CNX",
+        "from_name": "Singapore",
+        "to_name": "Chiang Mai",
+        "date": "2026-12-02",
+    },
+    {
+        "key": "CNX_SIN_0612",
+        "from": "CNX",
+        "to": "SIN",
+        "from_name": "Chiang Mai",
+        "to_name": "Singapore",
+        "date": "2026-12-06",
+    },
+
+    # Guangzhou standalone
     {
         "key": "SIN_CAN_0212",
         "from": "SIN",
@@ -190,6 +225,13 @@ HOTEL_SEARCHES = [
         "checkout": "2026-12-06",
     },
     {
+        "key": "CHIANGMAI_0206",
+        "location": "Chiang Mai",
+        "query": "Chiang Mai 4 star hotels near Old City Nimman transport",
+        "checkin": "2026-12-02",
+        "checkout": "2026-12-06",
+    },
+    {
         "key": "GUANGZHOU_0211",
         "location": "Guangzhou",
         "query": "Guangzhou 4 star hotels near metro station",
@@ -205,8 +247,8 @@ HOTEL_SEARCHES = [
 
 TRIPS = [
     {
-        "name": "OPTION A — JAPAN + TAIPEI",
-        "short": "Japan + Taipei",
+        "name": "OPTION A — JAPAN + TAIPEI + SINGAPORE",
+        "short": "Japan + Taipei + Singapore",
         "flights": [
             "SIN_TYO_0212",
             "TYO_TPE_1212",
@@ -220,8 +262,8 @@ TRIPS = [
         ],
     },
     {
-        "name": "OPTION B — JAPAN + GUANGZHOU",
-        "short": "Japan + Guangzhou",
+        "name": "OPTION B — JAPAN + GUANGZHOU + SINGAPORE",
+        "short": "Japan + Guangzhou + Singapore",
         "flights": [
             "SIN_TYO_0212",
             "TYO_CAN_1212",
@@ -235,8 +277,21 @@ TRIPS = [
         ],
     },
     {
-        "name": "OPTION C — BANGKOK",
-        "short": "Bangkok 2–6 Dec",
+        "name": "OPTION C — JAPAN ONLY",
+        "short": "Japan Only 2–12 Dec",
+        "flights": [
+            "SIN_TYO_0212",
+            "TYO_SIN_1212",
+        ],
+        "hotels": [
+            "TOKYO_0205",
+            "HAKONE_0510",
+            "TOKYO_1012",
+        ],
+    },
+    {
+        "name": "OPTION D — BANGKOK STANDALONE",
+        "short": "Bangkok Standalone 2–6 Dec",
         "flights": [
             "SIN_BKK_0212",
             "BKK_SIN_0612",
@@ -246,8 +301,19 @@ TRIPS = [
         ],
     },
     {
-        "name": "OPTION D — GUANGZHOU",
-        "short": "Guangzhou 2–11 Dec",
+        "name": "OPTION E — CHIANG MAI STANDALONE",
+        "short": "Chiang Mai Standalone 2–6 Dec",
+        "flights": [
+            "SIN_CNX_0212",
+            "CNX_SIN_0612",
+        ],
+        "hotels": [
+            "CHIANGMAI_0206",
+        ],
+    },
+    {
+        "name": "OPTION F — GUANGZHOU STANDALONE",
+        "short": "Guangzhou Standalone 2–11 Dec",
         "flights": [
             "SIN_CAN_0212",
             "CAN_SIN_1112",
