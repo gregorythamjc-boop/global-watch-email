@@ -1,10 +1,12 @@
-name: Travel Watch Daily Email
+name: Travel Watch Twice Weekly Email
 
 "on":
   workflow_dispatch:
+
   schedule:
-    # 23:00 UTC = 07:00 Singapore
-    - cron: "0 23 * * *"
+    # Monday and Thursday at 07:00 Singapore time
+    # 23:00 UTC on Sunday and Wednesday = 07:00 SGT
+    - cron: "0 23 * * 0,3"
 
 jobs:
   send-travel-watch:
