@@ -2,6 +2,13 @@
 # TRAVEL WATCH DAILY EMAIL
 # December 2026
 # 4 Travellers
+#
+# REQUIREMENTS
+# - Direct / non-stop flights ONLY
+# - Checked luggage required
+# - Accommodation for 4
+# - ALL PRICES displayed in SGD (S$)
+# - Email ONLY Gregory + Linda
 # ============================================================
 
 import os
@@ -12,18 +19,41 @@ from zoneinfo import ZoneInfo
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
+# ============================================================
+# GENERAL SETTINGS
+# ============================================================
+
 SG_TZ = ZoneInfo("Asia/Singapore")
 
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-EMAIL_TO = os.getenv("EMAIL_TO") or EMAIL_FROM
 
-# For now Travel Watch goes only to you.
-# We can add your team later if wanted.
-EMAIL_BCC = []
+# Travel Watch recipients ONLY
+EMAIL_TO = [
+    "gregory.thamjc@gmail.com",
+    "linda.meifang@gmail.com",
+]
 
 ADULTS = 4
-YEAR = 2026
+
+DISPLAY_CURRENCY = "SGD"
+CURRENCY_SYMBOL = "S$"
+
+
+# ============================================================
+# CURRENCY FORMAT
+# ============================================================
+
+def format_sgd(amount):
+    """
+    Format Travel Watch prices in Singapore dollars.
+    """
+
+    if amount is None:
+        return "Price unavailable"
+
+    return f"S${amount:,.2f}"
 
 
 # ============================================================
@@ -35,7 +65,10 @@ def sg_now():
 
 
 TODAY = sg_now().strftime("%d %b %Y")
-GENERATED = sg_now().strftime("%d %b %Y, %I:%M %p SGT")
+
+GENERATED = sg_now().strftime(
+    "%d %b %Y, %I:%M %p SGT"
+)
 
 
 # ============================================================
@@ -43,21 +76,30 @@ GENERATED = sg_now().strftime("%d %b %Y, %I:%M %p SGT")
 # ============================================================
 
 TRIPS = [
+
+    # ========================================================
+    # OPTION A — JAPAN + TAIPEI
+    # ========================================================
+
     {
         "name": "OPTION A — JAPAN + TAIPEI",
+
         "flights": [
+
             {
                 "from": "SIN",
                 "to": "TYO",
                 "date": "2026-12-02",
                 "label": "Singapore → Tokyo",
             },
+
             {
                 "from": "TYO",
                 "to": "TPE",
                 "date": "2026-12-12",
                 "label": "Tokyo → Taipei",
             },
+
             {
                 "from": "TPE",
                 "to": "SIN",
@@ -65,25 +107,30 @@ TRIPS = [
                 "label": "Taipei → Singapore",
             },
         ],
+
         "stays": [
+
             {
                 "city": "Tokyo",
                 "checkin": "2026-12-02",
                 "checkout": "2026-12-05",
                 "type": "Apartment / Hotel",
             },
+
             {
                 "city": "Hakone",
                 "checkin": "2026-12-05",
                 "checkout": "2026-12-10",
                 "type": "Ryokan / Hotel / Apartment",
             },
+
             {
                 "city": "Tokyo",
                 "checkin": "2026-12-10",
                 "checkout": "2026-12-12",
                 "type": "Apartment / Hotel",
             },
+
             {
                 "city": "Taipei",
                 "checkin": "2026-12-12",
@@ -93,21 +140,30 @@ TRIPS = [
         ],
     },
 
+
+    # ========================================================
+    # OPTION B — JAPAN + GUANGZHOU
+    # ========================================================
+
     {
         "name": "OPTION B — JAPAN + GUANGZHOU",
+
         "flights": [
+
             {
                 "from": "SIN",
                 "to": "TYO",
                 "date": "2026-12-02",
                 "label": "Singapore → Tokyo",
             },
+
             {
                 "from": "TYO",
                 "to": "CAN",
                 "date": "2026-12-12",
                 "label": "Tokyo → Guangzhou",
             },
+
             {
                 "from": "CAN",
                 "to": "SIN",
@@ -115,25 +171,30 @@ TRIPS = [
                 "label": "Guangzhou → Singapore",
             },
         ],
+
         "stays": [
+
             {
                 "city": "Tokyo",
                 "checkin": "2026-12-02",
                 "checkout": "2026-12-05",
                 "type": "Apartment / Hotel",
             },
+
             {
                 "city": "Hakone",
                 "checkin": "2026-12-05",
                 "checkout": "2026-12-10",
                 "type": "Ryokan / Hotel / Apartment",
             },
+
             {
                 "city": "Tokyo",
                 "checkin": "2026-12-10",
                 "checkout": "2026-12-12",
                 "type": "Apartment / Hotel",
             },
+
             {
                 "city": "Guangzhou",
                 "checkin": "2026-12-12",
@@ -143,15 +204,23 @@ TRIPS = [
         ],
     },
 
+
+    # ========================================================
+    # OPTION C — BANGKOK STANDALONE
+    # ========================================================
+
     {
         "name": "OPTION C — BANGKOK STANDALONE",
+
         "flights": [
+
             {
                 "from": "SIN",
                 "to": "BKK",
                 "date": "2026-12-02",
                 "label": "Singapore → Bangkok",
             },
+
             {
                 "from": "BKK",
                 "to": "SIN",
@@ -159,7 +228,9 @@ TRIPS = [
                 "label": "Bangkok → Singapore",
             },
         ],
+
         "stays": [
+
             {
                 "city": "Bangkok",
                 "checkin": "2026-12-02",
@@ -169,15 +240,23 @@ TRIPS = [
         ],
     },
 
+
+    # ========================================================
+    # OPTION D — GUANGZHOU STANDALONE
+    # ========================================================
+
     {
         "name": "OPTION D — GUANGZHOU STANDALONE",
+
         "flights": [
+
             {
                 "from": "SIN",
                 "to": "CAN",
                 "date": "2026-12-02",
                 "label": "Singapore → Guangzhou",
             },
+
             {
                 "from": "CAN",
                 "to": "SIN",
@@ -185,12 +264,16 @@ TRIPS = [
                 "label": "Guangzhou → Singapore",
             },
         ],
+
         "stays": [
+
             {
                 "city": "Guangzhou",
                 "checkin": "2026-12-02",
                 "checkout": "2026-12-11",
-                "type": "Apartment / Serviced Apartment / Hotel",
+                "type": (
+                    "Apartment / Serviced Apartment / Hotel"
+                ),
             },
         ],
     },
@@ -198,14 +281,23 @@ TRIPS = [
 
 
 # ============================================================
-# SEARCH LINKS
+# GOOGLE FLIGHT SEARCH
 # ============================================================
 
-def google_flight_link(origin, destination, date):
+def google_flight_link(
+    origin,
+    destination,
+    date,
+):
 
     query = (
-        f"Google Flights {origin} to {destination} "
-        f"{date} direct flights 4 adults checked baggage"
+        f"Google Flights "
+        f"{origin} to {destination} "
+        f"{date} "
+        f"nonstop direct flights only "
+        f"{ADULTS} adults "
+        f"checked baggage "
+        f"prices SGD"
     )
 
     return (
@@ -214,30 +306,61 @@ def google_flight_link(origin, destination, date):
     )
 
 
-def booking_link(city, checkin, checkout):
+# ============================================================
+# BOOKING.COM SEARCH
+# ============================================================
+
+def booking_link(
+    city,
+    checkin,
+    checkout,
+):
 
     params = {
+
         "ss": city,
+
         "checkin": checkin,
+
         "checkout": checkout,
+
         "group_adults": ADULTS,
+
         "no_rooms": 1,
+
         "group_children": 0,
+
+        "selected_currency": DISPLAY_CURRENCY,
     }
 
     return (
-        "https://www.booking.com/searchresults.html?"
+        "https://www.booking.com/"
+        "searchresults.html?"
         + urllib.parse.urlencode(params)
     )
 
 
-def airbnb_link(city, checkin, checkout):
+# ============================================================
+# AIRBNB SEARCH
+# ============================================================
+
+def airbnb_link(
+    city,
+    checkin,
+    checkout,
+):
 
     params = {
+
         "query": city,
+
         "checkin": checkin,
+
         "checkout": checkout,
+
         "adults": ADULTS,
+
+        "currency": DISPLAY_CURRENCY,
     }
 
     return (
@@ -247,12 +370,37 @@ def airbnb_link(city, checkin, checkout):
 
 
 # ============================================================
-# BUILD TRIP
+# CALCULATE NUMBER OF NIGHTS
+# ============================================================
+
+def calculate_nights(
+    checkin,
+    checkout,
+):
+
+    checkin_date = datetime.strptime(
+        checkin,
+        "%Y-%m-%d",
+    )
+
+    checkout_date = datetime.strptime(
+        checkout,
+        "%Y-%m-%d",
+    )
+
+    return (
+        checkout_date - checkin_date
+    ).days
+
+
+# ============================================================
+# GENERATE EACH TRIP OPTION
 # ============================================================
 
 def generate_trip(trip):
 
     html = f"""
+
     <div style="
         border:1px solid #dddddd;
         border-radius:10px;
@@ -260,24 +408,40 @@ def generate_trip(trip):
         margin-bottom:25px;
     ">
 
-    <h2>{trip["name"]}</h2>
+    <h2>
+        {trip["name"]}
+    </h2>
 
-    <h3>✈️ Flights</h3>
 
-    <table border="1"
-           cellpadding="7"
-           cellspacing="0"
-           style="
-             border-collapse:collapse;
-             width:100%;
-           ">
+    <h3>
+        ✈️ Direct / Non-Stop Flights Only
+    </h3>
 
-    <tr style="background:#f2f2f2;">
-        <th>Date</th>
-        <th>Route</th>
-        <th>Requirement</th>
-        <th>Search</th>
-    </tr>
+
+    <table
+        border="1"
+        cellpadding="7"
+        cellspacing="0"
+        style="
+            border-collapse:collapse;
+            width:100%;
+        "
+    >
+
+        <tr style="background:#f2f2f2;">
+
+            <th>Date</th>
+
+            <th>Route</th>
+
+            <th>Requirements</th>
+
+            <th>Currency</th>
+
+            <th>Search</th>
+
+        </tr>
+
     """
 
     for flight in trip["flights"]:
@@ -289,6 +453,7 @@ def generate_trip(trip):
         )
 
         html += f"""
+
         <tr>
 
             <td>
@@ -296,44 +461,83 @@ def generate_trip(trip):
             </td>
 
             <td>
-                <b>{flight["label"]}</b>
+                <b>
+                    {flight["label"]}
+                </b>
             </td>
 
             <td>
-                Direct only<br>
-                4 adults<br>
-                Checked luggage
+
+                <b>NON-STOP ONLY</b>
+
+                <br>
+
+                {ADULTS} adults
+
+                <br>
+
+                Checked luggage required
+
             </td>
 
             <td>
+
+                <b>
+                    SGD (S$)
+                </b>
+
+            </td>
+
+            <td>
+
                 <a href="{link}">
-                Search Flights
+                    Search Direct Flights
                 </a>
+
             </td>
 
         </tr>
+
         """
 
     html += """
+
     </table>
 
-    <h3>🏠 Accommodation</h3>
 
-    <table border="1"
-           cellpadding="7"
-           cellspacing="0"
-           style="
-             border-collapse:collapse;
-             width:100%;
-           ">
+    <h3>
+        🏠 Accommodation
+    </h3>
 
-    <tr style="background:#f2f2f2;">
-        <th>Location</th>
-        <th>Dates</th>
-        <th>Type</th>
-        <th>Guests</th>
-        <th>Search</th>
-    </tr>
+
+    <table
+        border="1"
+        cellpadding="7"
+        cellspacing="0"
+        style="
+            border-collapse:collapse;
+            width:100%;
+        "
+    >
+
+        <tr style="background:#f2f2f2;">
+
+            <th>Location</th>
+
+            <th>Dates</th>
+
+            <th>Nights</th>
+
+            <th>Type</th>
+
+            <th>Guests</th>
+
+            <th>Currency</th>
+
+            <th>Search</th>
+
+        </tr>
+
     """
 
     for stay in trip["stays"]:
@@ -350,67 +554,263 @@ def generate_trip(trip):
             stay["checkout"],
         )
 
-        checkin = datetime.strptime(
+        nights = calculate_nights(
             stay["checkin"],
-            "%Y-%m-%d",
-        )
-
-        checkout = datetime.strptime(
             stay["checkout"],
-            "%Y-%m-%d",
         )
-
-        nights = (
-            checkout - checkin
-        ).days
 
         html += f"""
+
         <tr>
 
             <td>
-                <b>{stay["city"]}</b>
+
+                <b>
+                    {stay["city"]}
+                </b>
+
             </td>
 
+
             <td>
+
                 {stay["checkin"]}
-                to
-                {stay["checkout"]}
+
                 <br>
-                ({nights} nights)
+
+                to
+
+                <br>
+
+                {stay["checkout"]}
+
             </td>
+
+
+            <td>
+                {nights}
+            </td>
+
 
             <td>
                 {stay["type"]}
             </td>
 
+
             <td>
-                4
+                {ADULTS}
             </td>
+
+
+            <td>
+
+                <b>
+                    SGD (S$)
+                </b>
+
+            </td>
+
 
             <td>
 
                 <a href="{booking}">
-                Booking.com
+                    Booking.com
                 </a>
 
-                <br>
+                <br><br>
 
                 <a href="{airbnb}">
-                Airbnb
+                    Airbnb
                 </a>
 
             </td>
 
         </tr>
+
         """
 
     html += """
+
     </table>
 
     </div>
+
     """
 
     return html
+
+
+# ============================================================
+# COST COMPARISON
+# ============================================================
+
+def generate_cost_comparison():
+
+    return """
+
+    <h2>
+        💰 Total Trip Cost Comparison — SGD
+    </h2>
+
+
+    <p>
+
+        All prices in Travel Watch are to be
+        compared and displayed in
+        <b>Singapore Dollars (S$)</b>.
+
+    </p>
+
+
+    <table
+        border="1"
+        cellpadding="8"
+        cellspacing="0"
+        style="
+            border-collapse:collapse;
+            width:100%;
+        "
+    >
+
+        <tr style="background:#f2f2f2;">
+
+            <th>
+                Option
+            </th>
+
+            <th>
+                Direct Flights
+                <br>
+                Total for 4
+            </th>
+
+            <th>
+                Accommodation
+                <br>
+                Total
+            </th>
+
+            <th>
+                Total Trip
+                <br>
+                for 4
+            </th>
+
+            <th>
+                Cost
+                <br>
+                Per Person
+            </th>
+
+        </tr>
+
+
+        <tr>
+
+            <td>
+                🇯🇵 Japan + 🇹🇼 Taipei
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+        </tr>
+
+
+        <tr>
+
+            <td>
+                🇯🇵 Japan + 🇨🇳 Guangzhou
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+        </tr>
+
+
+        <tr>
+
+            <td>
+                🇹🇭 Bangkok
+                <br>
+                2–6 Dec
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+        </tr>
+
+
+        <tr>
+
+            <td>
+                🇨🇳 Guangzhou
+                <br>
+                2–11 Dec
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending live pricing
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+            <td>
+                Pending
+            </td>
+
+        </tr>
+
+    </table>
+
+    """
 
 
 # ============================================================
@@ -420,6 +820,7 @@ def generate_trip(trip):
 def build_email():
 
     html = f"""
+
     <html>
 
     <body style="
@@ -429,17 +830,44 @@ def build_email():
         margin:auto;
     ">
 
+
     <h1>
-    ✈️ Travel Watch — December 2026
+        ✈️ Travel Watch — December 2026
     </h1>
 
-    <p>
-    <b>Generated:</b> {GENERATED}
-    </p>
 
     <p>
-    <b>Travellers:</b> 4
+
+        <b>
+            Generated:
+        </b>
+
+        {GENERATED}
+
     </p>
+
+
+    <p>
+
+        <b>
+            Travellers:
+        </b>
+
+        {ADULTS}
+
+    </p>
+
+
+    <p>
+
+        <b>
+            Display Currency:
+        </b>
+
+        SGD — Singapore Dollars (S$)
+
+    </p>
+
 
     <div style="
         background:#f5f5f5;
@@ -447,103 +875,115 @@ def build_email():
         border-radius:8px;
     ">
 
-    <b>Search priorities</b>
+        <b>
+            Search Requirements
+        </b>
 
-    <br><br>
+        <br><br>
 
-    ✈️ Direct / non-stop flights only<br>
-    🧳 Checked baggage required<br>
-    👨‍👩‍👦‍👦 Prices assessed for 4 travellers<br>
-    🏠 Apartments prioritised where requested<br>
-    💰 Compare total trip cost rather than
-    headline airfare alone
+        ✈️ <b>DIRECT / NON-STOP FLIGHTS ONLY</b>
+
+        <br>
+
+        🚫 Connecting flights excluded
+
+        <br>
+
+        🧳 Checked baggage required
+
+        <br>
+
+        👨‍👩‍👦‍👦 4 travellers
+
+        <br>
+
+        🏠 Accommodation suitable for 4
+
+        <br>
+
+        💵 <b>ALL PRICES IN SGD (S$)</b>
+
+        <br>
+
+        💰 Compare total trip cost,
+        not just headline airfare
 
     </div>
 
+
     <br>
+
     """
 
     for trip in TRIPS:
 
-        html += generate_trip(trip)
+        html += generate_trip(
+            trip
+        )
+
+
+    html += generate_cost_comparison()
+
 
     html += """
-    <h2>💰 Cost Comparison</h2>
-
-    <p>
-    The next version of Travel Watch will
-    populate this section with live airfare
-    and accommodation prices once the pricing
-    API is connected.
-    </p>
-
-    <table border="1"
-           cellpadding="8"
-           cellspacing="0"
-           style="
-             border-collapse:collapse;
-             width:100%;
-           ">
-
-        <tr style="background:#f2f2f2;">
-            <th>Option</th>
-            <th>Airfare for 4</th>
-            <th>Accommodation</th>
-            <th>Total</th>
-            <th>Per Person</th>
-        </tr>
-
-        <tr>
-            <td>Japan + Taipei</td>
-            <td>Pending live API</td>
-            <td>Pending live API</td>
-            <td>Pending</td>
-            <td>Pending</td>
-        </tr>
-
-        <tr>
-            <td>Japan + Guangzhou</td>
-            <td>Pending live API</td>
-            <td>Pending live API</td>
-            <td>Pending</td>
-            <td>Pending</td>
-        </tr>
-
-        <tr>
-            <td>Bangkok 2–6 Dec</td>
-            <td>Pending live API</td>
-            <td>Pending live API</td>
-            <td>Pending</td>
-            <td>Pending</td>
-        </tr>
-
-        <tr>
-            <td>Guangzhou 2–11 Dec</td>
-            <td>Pending live API</td>
-            <td>Pending live API</td>
-            <td>Pending</td>
-            <td>Pending</td>
-        </tr>
-
-    </table>
 
     <br>
+
+    <hr>
+
 
     <p style="
         font-size:12px;
         color:#666666;
     ">
 
-    Travel prices and availability change frequently.
-    Always confirm the final fare, baggage allowance,
-    taxes, cancellation conditions and accommodation
-    charges on the booking provider's website before
-    purchasing.
+        <b>
+            Important:
+        </b>
+
+        Travel prices and availability
+        change frequently.
+
+        <br><br>
+
+        Only direct / non-stop flights
+        should be considered.
+
+        Connecting flights should be excluded.
+
+        <br><br>
+
+        Flight comparisons should include
+        the required checked baggage rather
+        than comparing base fares alone.
+
+        <br><br>
+
+        All airfare and accommodation
+        comparisons should be converted
+        to Singapore Dollars (SGD / S$).
+
+        <br><br>
+
+        Accommodation totals should include
+        applicable taxes, service fees and
+        other mandatory charges where the
+        pricing provider makes them available.
+
+        <br><br>
+
+        Always verify the final airfare,
+        baggage allowance, taxes,
+        cancellation terms and accommodation
+        charges before booking.
 
     </p>
 
+
     </body>
+
     </html>
+
     """
 
     return html
@@ -556,55 +996,102 @@ def build_email():
 def send_email():
 
     if not EMAIL_FROM:
-        raise ValueError("EMAIL_FROM missing.")
+
+        raise ValueError(
+            "EMAIL_FROM missing from GitHub Secrets."
+        )
+
 
     if not EMAIL_PASSWORD:
-        raise ValueError("EMAIL_PASSWORD missing.")
 
-    if not EMAIL_TO:
-        raise ValueError("EMAIL_TO missing.")
+        raise ValueError(
+            "EMAIL_PASSWORD missing from GitHub Secrets."
+        )
 
-    msg = MIMEMultipart("alternative")
 
-    msg["From"] = EMAIL_FROM
-    msg["To"] = EMAIL_TO
-
-    msg["Subject"] = (
-        f"Travel Watch — Dec 2026 — {TODAY}"
-    )
-
-    msg.attach(
-        MIMEText(
-            build_email(),
-            "html",
-            "utf-8",
+    # Only Gregory + Linda
+    recipients = list(
+        dict.fromkeys(
+            EMAIL_TO
         )
     )
 
-    recipients = [
-        EMAIL_TO,
-        *EMAIL_BCC,
-    ]
 
-    recipients = list(
-        dict.fromkeys(recipients)
+    msg = MIMEMultipart(
+        "alternative"
     )
+
+
+    msg["From"] = EMAIL_FROM
+
+
+    msg["To"] = ", ".join(
+        EMAIL_TO
+    )
+
+
+    msg["Subject"] = (
+        f"Travel Watch — "
+        f"Dec 2026 — "
+        f"{TODAY}"
+    )
+
+
+    html_body = build_email()
+
+
+    msg.attach(
+
+        MIMEText(
+            html_body,
+            "html",
+            "utf-8",
+        )
+
+    )
+
+
+    print(
+        "Travel Watch recipients:"
+    )
+
+
+    for recipient in recipients:
+
+        print(
+            f" - {recipient}"
+        )
+
+
+    print(
+        "Display currency: SGD"
+    )
+
+
+    print(
+        "Flight requirement: "
+        "DIRECT / NON-STOP ONLY"
+    )
+
 
     with smtplib.SMTP_SSL(
         "smtp.gmail.com",
         465,
     ) as server:
 
+
         server.login(
             EMAIL_FROM,
             EMAIL_PASSWORD,
         )
+
 
         server.sendmail(
             EMAIL_FROM,
             recipients,
             msg.as_string(),
         )
+
 
     print(
         "Travel Watch email sent successfully."
@@ -618,15 +1105,49 @@ def send_email():
 if __name__ == "__main__":
 
     print(
-        "Starting Travel Watch..."
+        "=================================="
+    )
+
+    print(
+        "STARTING TRAVEL WATCH"
     )
 
     print(
         f"Generated: {GENERATED}"
     )
 
-    send_email()
+    print(
+        f"Travellers: {ADULTS}"
+    )
 
     print(
-        "Travel Watch complete."
+        "Currency: SGD (S$)"
+    )
+
+    print(
+        "Flights: DIRECT / NON-STOP ONLY"
+    )
+
+    print(
+        "Checked luggage: REQUIRED"
+    )
+
+    print(
+        "=================================="
+    )
+
+
+    send_email()
+
+
+    print(
+        "=================================="
+    )
+
+    print(
+        "TRAVEL WATCH COMPLETE"
+    )
+
+    print(
+        "=================================="
     )
