@@ -17,7 +17,8 @@
 #   - 4 travellers
 #   - Checked baggage required
 #   - Hotels: 4-star
-#   - Prefer hotels near train / metro / subway stations
+#   - Hotels near train / metro / MRT stations
+#   - Taipei: XIMENDING / XIMEN MRT specifically
 #   - Currency: SGD
 #   - Email ONLY Gregory + Linda
 # ============================================================
@@ -56,23 +57,7 @@ SERPAPI_URL = "https://serpapi.com/search.json"
 
 
 # ============================================================
-# AIRPORTS
-# ============================================================
-
-AIRPORT_NAMES = {
-    "SIN": "Singapore",
-    "NRT": "Tokyo Narita",
-    "HND": "Tokyo Haneda",
-    "TPE": "Taipei",
-    "BKK": "Bangkok Suvarnabhumi",
-    "DMK": "Bangkok Don Mueang",
-    "CAN": "Guangzhou",
-}
-
-
-# ============================================================
 # UNIQUE FLIGHT SEARCHES
-# Repeated SIN -> Tokyo search is done only once.
 # ============================================================
 
 FLIGHT_SEARCHES = [
@@ -153,7 +138,6 @@ FLIGHT_SEARCHES = [
 
 # ============================================================
 # HOTEL SEARCHES
-# Search wording deliberately asks for train/metro proximity.
 # ============================================================
 
 HOTEL_SEARCHES = [
@@ -178,13 +162,19 @@ HOTEL_SEARCHES = [
         "checkin": "2026-12-10",
         "checkout": "2026-12-12",
     },
+
+    # --------------------------------------------------------
+    # UPDATED TAIPEI SEARCH
+    # Ximending area / Ximen MRT specifically
+    # --------------------------------------------------------
     {
         "key": "TAIPEI_1218",
-        "location": "Taipei",
-        "query": "Taipei 4 star hotels near MRT station",
+        "location": "Taipei Ximending",
+        "query": "Ximending Taipei 4 star hotels near Ximen MRT Station",
         "checkin": "2026-12-12",
         "checkout": "2026-12-18",
     },
+
     {
         "key": "GUANGZHOU_1218",
         "location": "Guangzhou",
@@ -323,15 +313,14 @@ def search_flights(item):
         "departure_id": item["from"],
         "arrival_id": item["to"],
         "outbound_date": item["date"],
-        "type": "2",            # one-way
-        "travel_class": "1",    # economy
+        "type": "2",
+        "travel_class": "1",
         "adults": ADULTS,
         "currency": CURRENCY,
         "hl": "en",
         "gl": "sg",
 
-        # IMPORTANT:
-        # SerpApi / Google Flights uses 1 for NONSTOP ONLY.
+        # NON-STOP ONLY
         "stops": "1",
 
         # Sort by price
@@ -353,8 +342,7 @@ def search_flights(item):
 
         flight_legs = result.get("flights", [])
 
-        # Extra safety:
-        # Reject anything containing more than one flight segment.
+        # Extra protection against connecting flights
         if len(flight_legs) != 1:
             continue
 
@@ -377,7 +365,7 @@ def search_flights(item):
         dep_airport = departure.get("id", "")
         arr_airport = arrival.get("id", "")
 
-        key = (
+        unique_key = (
             airline,
             flight_number,
             dep_time,
@@ -385,10 +373,10 @@ def search_flights(item):
             price,
         )
 
-        if key in seen:
+        if unique_key in seen:
             continue
 
-        seen.add(key)
+        seen.add(unique_key)
 
         results.append({
             "airline": airline,
@@ -397,13 +385,8 @@ def search_flights(item):
             "arrival_time": arr_time,
             "departure_airport": dep_airport,
             "arrival_airport": arr_airport,
-
-            # Google Flights/SerpApi price for the search.
-            # The search is made for 4 adults.
             "price": price,
-
             "duration": leg.get("duration"),
-            "booking_token": result.get("booking_token"),
         })
 
     results.sort(key=lambda x: x["price"])
@@ -428,10 +411,10 @@ def search_hotels(item):
         "hl": "en",
         "gl": "sg",
 
-        # 4-star hotels ONLY
+        # 4 STAR ONLY
         "hotel_class": "4",
 
-        # Lowest price
+        # Sort by lowest price
         "sort_by": "3",
     }
 
@@ -448,7 +431,7 @@ def search_hotels(item):
             or prop.get("hotel_class")
         )
 
-        # Additional safety check for 4-star
+        # Keep four-star properties
         if isinstance(hotel_class, int) and hotel_class != 4:
             continue
 
@@ -458,10 +441,10 @@ def search_hotels(item):
         total = total_rate.get("extracted_lowest")
         nightly = rate_per_night.get("extracted_lowest")
 
-        # Some results may not expose total_rate.
-        # Estimate total only if necessary.
         estimated = False
 
+        # If Google only gives us a nightly rate,
+        # calculate an estimated stay total.
         if total is None and nightly is not None:
             total = nightly * nights(
                 item["checkin"],
@@ -475,13 +458,14 @@ def search_hotels(item):
         nearby = []
 
         for place in prop.get("nearby_places", [])[:5]:
-            place_name = place.get("name", "")
 
+            place_name = place.get("name", "")
             transports = place.get("transportations", [])
 
             transport_text = []
 
             for transport in transports[:2]:
+
                 t_type = transport.get("type", "")
                 duration = transport.get("duration", "")
 
@@ -491,9 +475,11 @@ def search_hotels(item):
                     )
 
             if place_name:
+
                 if transport_text:
                     nearby.append(
-                        f"{place_name} ({', '.join(transport_text)})"
+                        f"{place_name} "
+                        f"({', '.join(transport_text)})"
                     )
                 else:
                     nearby.append(place_name)
@@ -507,7 +493,6 @@ def search_hotels(item):
             "reviews": prop.get("reviews"),
             "hotel_class": hotel_class,
             "nearby": nearby,
-            "link": prop.get("link"),
             "source": prop.get("source"),
         })
 
@@ -525,32 +510,39 @@ def quote(text):
 
 
 def google_flights_link(f):
+
     q = (
         f"Google Flights {f['from_name']} to {f['to_name']} "
         f"{f['date']} nonstop 4 adults SGD"
     )
+
     return "https://www.google.com/search?q=" + quote(q)
 
 
 def trip_flights_link(f):
+
     q = (
         f"site:trip.com/flights "
         f"{f['from_name']} {f['to_name']} "
         f"{f['date']} direct flight"
     )
+
     return "https://www.google.com/search?q=" + quote(q)
 
 
 def skyscanner_link(f):
+
     q = (
         f"site:skyscanner.com.sg "
         f"{f['from_name']} {f['to_name']} "
         f"{f['date']} direct flights"
     )
+
     return "https://www.google.com/search?q=" + quote(q)
 
 
 def booking_link(h):
+
     params = {
         "ss": h["location"],
         "checkin": h["checkin"],
@@ -568,27 +560,29 @@ def booking_link(h):
 
 
 def agoda_link(h):
+
     q = (
         f"Agoda {h['location']} "
         f"{h['checkin']} {h['checkout']} "
-        f"4 adults 4 star hotel near train station SGD"
+        f"4 adults 4 star hotel SGD"
     )
 
     return "https://www.google.com/search?q=" + quote(q)
 
 
 def trip_hotel_link(h):
+
     q = (
         f"Trip.com {h['location']} hotels "
         f"{h['checkin']} {h['checkout']} "
-        f"4 adults 4 star near train station SGD"
+        f"4 adults 4 star hotel SGD"
     )
 
     return "https://www.google.com/search?q=" + quote(q)
 
 
 # ============================================================
-# HTML
+# HTML STYLE
 # ============================================================
 
 STYLE = """
@@ -640,10 +634,6 @@ th {
     white-space: nowrap;
 }
 
-.good {
-    font-weight: bold;
-}
-
 .small {
     font-size: 12px;
     color: #666;
@@ -658,11 +648,16 @@ th {
 """
 
 
+# ============================================================
+# FLIGHT TABLE
+# ============================================================
+
 def flight_table(search, results):
 
     rows = ""
 
     if not results:
+
         rows = """
         <tr>
             <td colspan="7">
@@ -677,20 +672,30 @@ def flight_table(search, results):
         rows += f"""
         <tr>
             <td>{i}</td>
+
             <td>
                 <strong>{safe(r['airline'])}</strong><br>
                 {safe(r['flight_number'])}
             </td>
+
             <td>
                 {safe(r['departure_airport'])}<br>
                 {safe(r['departure_time'])}
             </td>
+
             <td>
                 {safe(r['arrival_airport'])}<br>
                 {safe(r['arrival_time'])}
             </td>
-            <td><strong>NON-STOP</strong></td>
-            <td class="price">{money(r['price'])}</td>
+
+            <td>
+                <strong>NON-STOP</strong>
+            </td>
+
+            <td class="price">
+                {money(r['price'])}
+            </td>
+
             <td>
                 Checked baggage must be verified
                 before purchase.
@@ -707,6 +712,7 @@ def flight_table(search, results):
     </h3>
 
     <table>
+
         <tr>
             <th>#</th>
             <th>Airline</th>
@@ -718,29 +724,46 @@ def flight_table(search, results):
         </tr>
 
         {rows}
+
     </table>
 
     <p>
-        <strong>Cross-check:</strong>
-        <a href="{google_flights_link(search)}">Google Flights</a>
+        <strong>Compare:</strong>
+
+        <a href="{google_flights_link(search)}">
+            Google Flights
+        </a>
+
         &nbsp; | &nbsp;
-        <a href="{trip_flights_link(search)}">Trip.com</a>
+
+        <a href="{trip_flights_link(search)}">
+            Trip.com
+        </a>
+
         &nbsp; | &nbsp;
-        <a href="{skyscanner_link(search)}">Skyscanner</a>
+
+        <a href="{skyscanner_link(search)}">
+            Skyscanner
+        </a>
     </p>
     """
 
+
+# ============================================================
+# HOTEL TABLE
+# ============================================================
 
 def hotel_table(search, results):
 
     rows = ""
 
     if not results:
+
         rows = """
         <tr>
             <td colspan="7">
                 No matching live 4-star hotel price returned.
-                Use the comparison links below.
+                Use Booking.com, Agoda or Trip.com below.
             </td>
         </tr>
         """
@@ -752,7 +775,7 @@ def hotel_table(search, results):
         )
 
         if not nearby:
-            nearby = "Check station distance before booking"
+            nearby = "Check MRT / station distance before booking"
 
         rating = (
             safe(r["rating"])
@@ -768,25 +791,55 @@ def hotel_table(search, results):
 
         rows += f"""
         <tr>
+
             <td>{i}</td>
+
             <td>
                 <strong>{safe(r['name'])}</strong><br>
-                4-star
+                ★★★★
             </td>
-            <td>{rating}</td>
-            <td>{nearby}</td>
+
+            <td>
+                {rating}
+            </td>
+
+            <td>
+                {nearby}
+            </td>
+
             <td class="price">
                 {money(r['nightly'])}
             </td>
+
             <td class="price">
                 {money(r['total'])}<br>
-                <span class="small">{price_note}</span>
+                <span class="small">
+                    {price_note}
+                </span>
             </td>
+
             <td>
                 {safe(r['source'] or 'Google Hotels')}
             </td>
+
         </tr>
         """
+
+    # Special description for Taipei Ximending
+    if search["key"] == "TAIPEI_1218":
+
+        requirement = (
+            "4-star • 4 travellers • SGD • "
+            "<strong>Ximending area</strong> • "
+            "near <strong>Ximen MRT Station</strong>"
+        )
+
+    else:
+
+        requirement = (
+            "4-star • 4 travellers • SGD • "
+            "near train / metro / MRT where possible"
+        )
 
     return f"""
     <h3>
@@ -798,11 +851,11 @@ def hotel_table(search, results):
 
     <p>
         <strong>Requirement:</strong>
-        4-star • 4 travellers • SGD •
-        near train / metro / MRT where possible
+        {requirement}
     </p>
 
     <table>
+
         <tr>
             <th>#</th>
             <th>Hotel</th>
@@ -814,21 +867,33 @@ def hotel_table(search, results):
         </tr>
 
         {rows}
+
     </table>
 
     <p>
-        <strong>Cross-check:</strong>
-        <a href="{booking_link(search)}">Booking.com</a>
+        <strong>Compare:</strong>
+
+        <a href="{booking_link(search)}">
+            Booking.com
+        </a>
+
         &nbsp; | &nbsp;
-        <a href="{agoda_link(search)}">Agoda</a>
+
+        <a href="{agoda_link(search)}">
+            Agoda
+        </a>
+
         &nbsp; | &nbsp;
-        <a href="{trip_hotel_link(search)}">Trip.com</a>
+
+        <a href="{trip_hotel_link(search)}">
+            Trip.com
+        </a>
     </p>
     """
 
 
 # ============================================================
-# MAIN REPORT
+# BUILD REPORT
 # ============================================================
 
 def build_report():
@@ -843,9 +908,11 @@ def build_report():
     flight_results = {}
 
     for search in FLIGHT_SEARCHES:
+
         print(
-            f"Flight: {search['from_name']} "
-            f"-> {search['to_name']} "
+            f"Flight: "
+            f"{search['from_name']} -> "
+            f"{search['to_name']} "
             f"{search['date']}"
         )
 
@@ -856,34 +923,34 @@ def build_report():
     hotel_results = {}
 
     for search in HOTEL_SEARCHES:
+
         print(
-            f"Hotel: {search['location']} "
-            f"{search['checkin']} -> {search['checkout']}"
+            f"Hotel: "
+            f"{search['location']} "
+            f"{search['checkin']} -> "
+            f"{search['checkout']}"
         )
 
         hotel_results[search["key"]] = search_hotels(search)
-
-    flight_map = {
-        x["key"]: x for x in FLIGHT_SEARCHES
-    }
-
-    hotel_map = {
-        x["key"]: x for x in HOTEL_SEARCHES
-    }
 
     now = datetime.now(SG_TZ)
 
     body = f"""
     <html>
+
     <head>
         {STYLE}
     </head>
 
     <body>
+
     <div class="container">
 
         <div class="header">
-            <h1>🌏 Travel Watch — December 2026</h1>
+
+            <h1>
+                🌏 Travel Watch — December 2026
+            </h1>
 
             <p>
                 Generated:
@@ -897,32 +964,45 @@ def build_report():
                 ✈️ Economy • DIRECT / NON-STOP ONLY<br>
                 🧳 Checked baggage required<br>
                 🏨 4-star hotels near train / metro stations<br>
-                💰 All prices displayed in Singapore Dollars (S$)
+                🇹🇼 Taipei: Ximending / Ximen MRT<br>
+                💰 All prices in Singapore Dollars (S$)
             </p>
+
         </div>
 
         <div class="warning">
+
             <strong>Important:</strong>
-            Live prices in this report come from Google travel
-            results through SerpApi. Trip.com, Skyscanner,
-            Booking.com and Agoda are provided as comparison
-            links. Checked-baggage entitlement/fees must be
-            verified before booking because the headline fare
-            does not always include checked luggage.
+
+            Live prices come from Google travel results
+            through SerpApi.
+
+            Trip.com, Skyscanner, Booking.com and Agoda
+            are included as comparison links.
+
+            Always verify final airfare, checked baggage,
+            hotel taxes, room occupancy and cancellation
+            conditions before booking.
+
         </div>
+
         <br>
     """
 
-    # --------------------------------------------------------
+    # ========================================================
     # FLIGHTS
-    # --------------------------------------------------------
+    # ========================================================
 
     body += """
     <div class="card">
-        <h2>✈️ Live Direct Flight Watch</h2>
+
+        <h2>
+            ✈️ Live Direct Flight Watch
+        </h2>
     """
 
     for search in FLIGHT_SEARCHES:
+
         body += flight_table(
             search,
             flight_results.get(search["key"], [])
@@ -930,16 +1010,21 @@ def build_report():
 
     body += "</div>"
 
-    # --------------------------------------------------------
+
+    # ========================================================
     # HOTELS
-    # --------------------------------------------------------
+    # ========================================================
 
     body += """
     <div class="card">
-        <h2>🏨 Live 4-Star Hotel Watch</h2>
+
+        <h2>
+            🏨 Live 4-Star Hotel Watch
+        </h2>
     """
 
     for search in HOTEL_SEARCHES:
+
         body += hotel_table(
             search,
             hotel_results.get(search["key"], [])
@@ -947,23 +1032,27 @@ def build_report():
 
     body += "</div>"
 
-    # --------------------------------------------------------
-    # TRIP COMPARISON
-    # --------------------------------------------------------
+
+    # ========================================================
+    # TRIP TOTALS
+    # ========================================================
 
     body += """
     <div class="card">
 
-    <h2>💰 Cheapest Available Trip Comparison</h2>
+        <h2>
+            💰 Cheapest Available Trip Comparison
+        </h2>
 
-    <table>
-        <tr>
-            <th>Option</th>
-            <th>Flights</th>
-            <th>Hotels</th>
-            <th>Trip Total</th>
-            <th>Per Person</th>
-        </tr>
+        <table>
+
+            <tr>
+                <th>Option</th>
+                <th>Flights</th>
+                <th>Hotels</th>
+                <th>Trip Total</th>
+                <th>Per Person</th>
+            </tr>
     """
 
     for trip in TRIPS:
@@ -998,23 +1087,33 @@ def build_report():
             per_person = trip_total / ADULTS
 
         else:
+
             trip_total = None
             per_person = None
 
         body += f"""
         <tr>
-            <td><strong>{safe(trip['short'])}</strong></td>
 
             <td>
-                {money(flight_total)
-                 if flight_complete
-                 else 'Incomplete live pricing'}
+                <strong>
+                    {safe(trip['short'])}
+                </strong>
             </td>
 
             <td>
-                {money(hotel_total)
-                 if hotel_complete
-                 else 'Incomplete live pricing'}
+                {
+                    money(flight_total)
+                    if flight_complete
+                    else 'Incomplete live pricing'
+                }
+            </td>
+
+            <td>
+                {
+                    money(hotel_total)
+                    if hotel_complete
+                    else 'Incomplete live pricing'
+                }
             </td>
 
             <td class="price">
@@ -1024,24 +1123,33 @@ def build_report():
             <td class="price">
                 {money(per_person)}
             </td>
+
         </tr>
         """
 
     body += """
-    </table>
+        </table>
 
-    <p class="small">
-        The comparison uses the cheapest qualifying live result
-        returned for each individual flight and hotel search.
-        Availability and prices can change at any time.
-        Verify final fare, baggage allowance, hotel room capacity,
-        taxes, fees and cancellation conditions before payment.
-    </p>
+        <p class="small">
+
+            The comparison uses the cheapest qualifying
+            live result returned for each flight and hotel
+            search.
+
+            Availability and prices can change at any time.
+
+            Verify final fare, checked baggage allowance,
+            room capacity, taxes, fees and cancellation
+            conditions before payment.
+
+        </p>
 
     </div>
 
     </div>
+
     </body>
+
     </html>
     """
 
@@ -1055,10 +1163,14 @@ def build_report():
 def send_email():
 
     if not EMAIL_FROM:
-        raise RuntimeError("EMAIL_FROM is missing.")
+        raise RuntimeError(
+            "EMAIL_FROM is missing."
+        )
 
     if not EMAIL_PASSWORD:
-        raise RuntimeError("EMAIL_PASSWORD is missing.")
+        raise RuntimeError(
+            "EMAIL_PASSWORD is missing."
+        )
 
     report = build_report()
 
@@ -1072,24 +1184,35 @@ def send_email():
     )
 
     msg["From"] = EMAIL_FROM
+
     msg["To"] = ", ".join(EMAIL_TO)
 
     text_version = """
 Travel Watch — December 2026
 
-Please view this email in HTML format to see the live
-flight and hotel price tables.
+Please view this email in HTML format to see
+the live flight and hotel price tables.
 """
 
     msg.attach(
-        MIMEText(text_version, "plain", "utf-8")
+        MIMEText(
+            text_version,
+            "plain",
+            "utf-8"
+        )
     )
 
     msg.attach(
-        MIMEText(report, "html", "utf-8")
+        MIMEText(
+            report,
+            "html",
+            "utf-8"
+        )
     )
 
-    recipients = list(dict.fromkeys(EMAIL_TO))
+    recipients = list(
+        dict.fromkeys(EMAIL_TO)
+    )
 
     with smtplib.SMTP_SSL(
         "smtp.gmail.com",
@@ -1108,8 +1231,12 @@ flight and hotel price tables.
             msg.as_string()
         )
 
-    print("Travel Watch email sent successfully.")
+    print(
+        "Travel Watch email sent successfully."
+    )
+
     print("Recipients:")
+
     for recipient in recipients:
         print(f" - {recipient}")
 
