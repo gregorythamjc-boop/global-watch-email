@@ -1,13 +1,9 @@
 name: Travel Watch Daily Email
 
-on:
-  schedule:
-    # Runs every day at 07:00 Singapore time
-    # 23:00 UTC = 07:00 SGT
-    - cron: '0 23 * * *'
-
-  # Allows us to test it manually
+"on":
   workflow_dispatch:
+  schedule:
+    - cron: "0 23 * * *"
 
 jobs:
   send-travel-watch:
@@ -20,11 +16,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Run Travel Watch
         env:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: |
-          python travel_watch_email.py
+        run: python travel_watch_email.py
