@@ -1,8 +1,11 @@
 name: Global Watch Daily Email
 
-on:
+"on":
   schedule:
-  - cron: '0 23 * * *'
+    # 23:00 UTC = 07:00 Singapore time
+    - cron: '0 23 * * *'
+
+  # Allows manual testing from GitHub Actions
   workflow_dispatch:
 
 jobs:
@@ -27,5 +30,7 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+
         run: |
           python global_watch_email.py
