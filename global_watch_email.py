@@ -30,6 +30,8 @@ SG_TZ = ZoneInfo("Asia/Singapore")
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_TO = os.getenv("EMAIL_TO") or EMAIL_FROM
+FMP_API_KEY = os.getenv("FMP_API_KEY")
+FMP_BASE = "https://financialmodelingprep.com/stable"
 
 # Leave empty while testing.
 # Add email addresses here later if you want the team to receive it.
@@ -441,22 +443,97 @@ def get_price_change(ticker):
 # ============================================================
 # FUND PERFORMANCE ENGINE
 #
+# Primary: Financial Modeling Prep (FMP)
+# Fallback: Yahoo Finance
+#
 # Calculates:
 # - 7 calendar day return
 # - 1 month return
 # - YTD return
-#
-# Uses the nearest available NAV observation on/before the
-# comparison date.
 # ============================================================
 
-def get_fund_performance(ticker):
+def _performance_from_series(close):
+    if close is None or len(close) < 2:
+        return None
 
+    close = close.dropna().sort_index()
+    if len(close) < 2:
+        return None
+
+    latest = safe_float(close.iloc[-1])
+    if latest is None:
+        return None
+
+    latest_date = close.index[-1]
+
+    def price_on_or_before(target):
+        hist = close[close.index <= target]
+        return safe_float(hist.iloc[-1]) if not hist.empty else None
+
+    one_week = price_on_or_before(latest_date - pd.Timedelta(days=7))
+    one_month = price_on_or_before(latest_date - pd.DateOffset(months=1))
+
+    year_data = close[close.index.year == latest_date.year]
+    ytd_start = safe_float(year_data.iloc[0]) if not year_data.empty else None
+
+    def ret(old):
+        return ((latest - old) / old) * 100 if old not in (None, 0) else None
+
+    return {
+        "latest": latest,
+        "week": ret(one_week),
+        "month": ret(one_month),
+        "ytd": ret(ytd_start),
+        "date": latest_date.strftime("%d %b %Y"),
+    }
+
+
+def get_fmp_fund_performance(symbol):
+    """Return historical performance from FMP when a verified FMP symbol exists."""
+    if not FMP_API_KEY or not symbol:
+        return None
+
+    try:
+        response = requests.get(
+            f"{FMP_BASE}/historical-price-eod/light",
+            params={"symbol": symbol, "apikey": FMP_API_KEY},
+            timeout=20,
+        )
+        response.raise_for_status()
+        rows = response.json()
+
+        if not isinstance(rows, list) or len(rows) < 2:
+            return None
+
+        points = {}
+        for row in rows:
+            date = row.get("date")
+            price = row.get("price")
+            if date and price is not None:
+                try:
+                    points[pd.Timestamp(date)] = float(price)
+                except Exception:
+                    pass
+
+        if len(points) < 2:
+            return None
+
+        close = pd.Series(points).sort_index()
+        result = _performance_from_series(close)
+        if result:
+            result["source"] = "FMP"
+        return result
+
+    except Exception as e:
+        print(f"FMP fund history failed for {symbol}: {e}")
+        return None
+
+
+def get_yahoo_fund_performance(ticker):
     if not ticker:
         return None
 
     try:
-
         data = yf.download(
             ticker,
             period="1y",
@@ -467,142 +544,31 @@ def get_fund_performance(ticker):
         )
 
         if data.empty or "Close" not in data:
-
-            print(
-                f"No fund data for {ticker}"
-            )
-
+            print(f"No Yahoo fund data for {ticker}")
             return None
 
         close = data["Close"].dropna()
-
         if isinstance(close, pd.DataFrame):
             close = close.iloc[:, 0]
 
-        if len(close) < 2:
-            return None
-
-        latest = safe_float(
-            close.iloc[-1]
-        )
-
-        if latest is None:
-            return None
-
-        latest_date = close.index[-1]
-
-        # ----------------------------------------------
-        # 7 CALENDAR DAYS
-        # ----------------------------------------------
-
-        week_target = (
-            latest_date
-            - pd.Timedelta(days=7)
-        )
-
-        week_history = close[
-            close.index <= week_target
-        ]
-
-        one_week = None
-
-        if not week_history.empty:
-
-            one_week = safe_float(
-                week_history.iloc[-1]
-            )
-
-        # ----------------------------------------------
-        # ONE MONTH
-        # ----------------------------------------------
-
-        month_target = (
-            latest_date
-            - pd.DateOffset(months=1)
-        )
-
-        month_history = close[
-            close.index <= month_target
-        ]
-
-        one_month = None
-
-        if not month_history.empty:
-
-            one_month = safe_float(
-                month_history.iloc[-1]
-            )
-
-        # ----------------------------------------------
-        # YTD
-        # ----------------------------------------------
-
-        current_year = (
-            latest_date.year
-        )
-
-        start_year_data = close[
-            close.index.year
-            == current_year
-        ]
-
-        ytd_start = None
-
-        if not start_year_data.empty:
-
-            ytd_start = safe_float(
-                start_year_data.iloc[0]
-            )
-
-        # ----------------------------------------------
-        # RETURNS
-        # ----------------------------------------------
-
-        week_perf = None
-
-        if one_week not in (None, 0):
-
-            week_perf = (
-                (latest - one_week)
-                / one_week
-            ) * 100
-
-        month_perf = None
-
-        if one_month not in (None, 0):
-
-            month_perf = (
-                (latest - one_month)
-                / one_month
-            ) * 100
-
-        ytd_perf = None
-
-        if ytd_start not in (None, 0):
-
-            ytd_perf = (
-                (latest - ytd_start)
-                / ytd_start
-            ) * 100
-
-        return {
-            "latest": latest,
-            "week": week_perf,
-            "month": month_perf,
-            "ytd": ytd_perf,
-            "date": latest_date.strftime(
-                "%d %b %Y"
-            ),
-        }
+        result = _performance_from_series(close)
+        if result:
+            result["source"] = "Yahoo Finance"
+        return result
 
     except Exception as e:
-
-        print(
-            f"Fund performance failed "
-            f"for {ticker}: {e}"
-        )
-
+        print(f"Yahoo fund performance failed for {ticker}: {e}")
         return None
+
+
+def get_fund_performance(ticker, fmp_symbol=None):
+    # Use FMP first only when an exact/verified FMP symbol has been configured.
+    result = get_fmp_fund_performance(fmp_symbol)
+    if result:
+        return result
+
+    # Preserve your current Yahoo identifiers as fallback.
+    return get_yahoo_fund_performance(ticker)
 
 
 # ============================================================
@@ -1161,6 +1127,7 @@ def generate_unit_trust_section():
                 "month": result["month"],
                 "ytd": result["ytd"],
                 "date": result["date"],
+                "source": result.get("source", "Unknown"),
             })
 
             html += f"""
@@ -1233,10 +1200,10 @@ def generate_unit_trust_section():
 
 
     # ========================================================
-    # TOP 5
+    # TOP 10
     # ========================================================
 
-    top_funds = ranked_funds[:5]
+    top_funds = ranked_funds[:10]
 
     html += """
     <h3>🚀 Top Performing Funds — Last 7 Days</h3>
@@ -1286,13 +1253,13 @@ def generate_unit_trust_section():
 
 
     # ========================================================
-    # BOTTOM 5
+    # BOTTOM 10
     # ========================================================
 
     bottom_funds = sorted(
         ranked_funds,
         key=lambda x: x["week"],
-    )[:5]
+    )[:10]
 
     html += """
     <h3>🔻 Worst Performing Funds — Last 7 Days</h3>
